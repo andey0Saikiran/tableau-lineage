@@ -1,4 +1,0 @@
-# Canonical host is www (matches the rel=canonical in index.html).
-# Cloudflare Pages serves each custom domain independently, so redirect the
-# apex to www to avoid duplicate-content. Vite copies this file into dist/.
-https://tableau-lineage.com/*  https://www.tableau-lineage.com/:splat  301
