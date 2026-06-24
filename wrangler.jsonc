@@ -1,0 +1,10 @@
+{
+  // Serve the built Vite site (the `dist` folder) as a pure static site via
+  // Cloudflare Workers static assets. There is no server code. The _headers and
+  // _redirects files emitted into dist are honored automatically.
+  "name": "tableau-lineage",
+  "compatibility_date": "2025-06-01",
+  "assets": {
+    "directory": "./dist"
+  }
+}
