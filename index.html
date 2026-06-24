@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#0ea5e9" />
 
     <title>Tableau Lineage Visualizer — see the dependencies inside any .twbx, in your browser</title>
     <meta
@@ -14,19 +15,51 @@
 
     <!-- Open Graph / social -->
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Tableau Lineage Visualizer" />
     <meta property="og:title" content="Tableau Lineage Visualizer" />
     <meta
       property="og:description"
       content="Map calculated-field dependencies and metadata inside any Tableau .twbx — 100% in your browser. No upload, no tracking."
     />
     <meta property="og:url" content="https://www.tableau-lineage.com/" />
+    <meta property="og:image" content="https://www.tableau-lineage.com/og.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Tableau Lineage Visualizer — see the dependencies inside any Tableau workbook" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Tableau Lineage Visualizer" />
+    <meta
+      name="twitter:description"
+      content="Map calculated-field dependencies and metadata inside any Tableau .twbx — 100% in your browser."
+    />
+    <meta name="twitter:image" content="https://www.tableau-lineage.com/og.jpg" />
 
     <!-- Lineage-graph favicon (matches the in-app logo) -->
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 40 40'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%230ea5e9'/%3E%3Cstop offset='1' stop-color='%2322c55e'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='40' height='40' rx='11' fill='url(%23g)'/%3E%3Cg stroke='white' stroke-width='2' stroke-linecap='round' opacity='0.85'%3E%3Cpath d='M12.5 14.5 L24 20'/%3E%3Cpath d='M12.5 25.5 L24 20'/%3E%3C/g%3E%3Ccircle cx='12.5' cy='14.5' r='3.4' fill='white'/%3E%3Ccircle cx='12.5' cy='25.5' r='3.4' fill='white'/%3E%3Ccircle cx='26' cy='20' r='4.6' fill='white'/%3E%3Ccircle cx='26' cy='20' r='2.1' fill='%230ea5e9'/%3E%3C/svg%3E"
     />
+
+    <!-- Structured data: a free, browser-based tool -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Tableau Lineage Visualizer",
+        "url": "https://www.tableau-lineage.com/",
+        "applicationCategory": "BusinessApplication",
+        "operatingSystem": "Any (web browser)",
+        "browserRequirements": "Requires a modern web browser. No installation.",
+        "description": "A privacy-first web app that visualizes the field-level lineage, calculated-field dependencies, and metadata inside any Tableau workbook (.twbx) — entirely in your browser. Nothing is uploaded.",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+        "isAccessibleForFree": true,
+        "creator": {
+          "@type": "Person",
+          "name": "Sai Kiran Andey",
+          "url": "https://www.linkedin.com/in/andeysaikiran/"
+        }
+      }
+    </script>
 
     <!--
       Cookieless, anonymous analytics (Cloudflare Web Analytics).

@@ -7,3 +7,6 @@ dist-ssr
 *.tsbuildinfo
 npm-debug.log*
 yarn-error.log*
+
+# Workflow files need the gh "workflow" OAuth scope to push; add via GitHub web UI
+.github/workflows/
