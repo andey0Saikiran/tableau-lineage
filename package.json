@@ -5,7 +5,7 @@
   "description": "Privacy-first, fully client-side visualizer for Tableau workbook (.twbx) field lineage, calculated-field dependencies, and metadata.",
   "type": "module",
   "license": "MIT",
-  "homepage": "https://www.tableau-lineage.com",
+  "homepage": "https://tableau-lineage.com",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

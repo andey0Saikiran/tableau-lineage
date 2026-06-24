@@ -29,7 +29,7 @@ export function downloadReportHtml(reportHtml: string, fileLabel: string): void 
 export function downloadJson(result: ExtractResult): void {
   const payload = {
     workbook: result.fileLabel,
-    generated_with: 'https://www.tableau-lineage.com',
+    generated_with: 'https://tableau-lineage.com',
     stats: result.stats,
     parameters: result.parameters,
     raw_fields: result.rawFields,

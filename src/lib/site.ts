@@ -2,7 +2,7 @@
 // Update REPO_URL once you create the GitHub repo, and add Mourya's LinkedIn
 // when available (leave `linkedin` undefined to render the name without a link).
 
-export const SITE_URL = 'https://www.tableau-lineage.com';
+export const SITE_URL = 'https://tableau-lineage.com';
 export const REPO_URL = 'https://github.com/andey0Saikiran/tableau-lineage';
 
 export interface Person {

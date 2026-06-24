@@ -5,7 +5,7 @@ dependencies, and metadata inside any Tableau workbook (`.twbx`) — **entirely 
 browser**. Drop in a workbook and get an interactive dependency graph and a searchable
 data dictionary. Nothing is uploaded, stored, or sent anywhere.
 
-🔗 **Live:** https://www.tableau-lineage.com
+🔗 **Live:** https://tableau-lineage.com
 
 ---
 
