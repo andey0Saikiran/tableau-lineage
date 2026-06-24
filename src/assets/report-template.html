@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau Metadata: __FILE_LABEL__</title>
+    <script>/*__VIS_NETWORK__*/</script>
+    <style>
+        :root {
+            --primary: #0078d4;
+            --primary-dark: #005a9e;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --purple: #8b5cf6;
+            --pink: #ec4899;
+            --bg-light: #f4f7fb;
+            --bg-white: #ffffff;
+            --border: #e2e8f0;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.15);
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { height: 100%; }
+        body {
+            font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-light);
+            color: var(--text-primary);
+            height: 100vh;
+            overflow: hidden;
+        }
+        :focus-visible { outline: 3px solid rgba(0,120,212,0.5); outline-offset: 2px; border-radius: 6px; }
+        @media (prefers-reduced-motion: reduce) {
+            * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+        }
+
+        .header {
+            background: var(--bg-white);
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow-sm);
+            flex-wrap: wrap;
+        }
+        .header-left { display: flex; align-items: center; gap: 14px; min-width: 0; }
+        .logo { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 16px; color: var(--primary); }
+        .logo-icon {
+            width: 32px; height: 32px;
+            background: linear-gradient(135deg, var(--primary), var(--purple));
+            border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            color: white; font-size: 16px;
+        }
+        .file-badge {
+            font-size: 12px; color: var(--text-secondary); background: var(--bg-light);
+            padding: 6px 12px; border-radius: 6px; max-width: 280px;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border: 1px solid var(--border);
+        }
+        .tabs { display: flex; gap: 4px; background: var(--bg-light); padding: 4px; border-radius: 8px; }
+        .tab-btn {
+            padding: 8px 18px; border: none; background: transparent; cursor: pointer;
+            font-size: 13px; font-weight: 600; color: var(--text-secondary); border-radius: 6px; transition: all 0.2s;
+        }
+        .tab-btn:hover { background: rgba(255,255,255,0.7); color: var(--text-primary); }
+        .tab-btn.active { background: var(--bg-white); color: var(--primary); box-shadow: var(--shadow-sm); }
+        .tab-btn[aria-selected="true"] { background: var(--bg-white); color: var(--primary); box-shadow: var(--shadow-sm); }
+
+        .main-container { height: calc(100vh - 57px); position: relative; }
+        .view-panel { display: none; height: 100%; }
+        .view-panel.active { display: block; }
+        #graphView { position: relative; }
+        #network { width: 100%; height: 100%; background: linear-gradient(135deg, #fbfcfe 0%, #eef3f9 100%); }
+
+        .toolbar {
+            position: absolute; top: 14px; left: 14px; right: 14px;
+            display: flex; gap: 10px; align-items: center; z-index: 50; pointer-events: none; flex-wrap: wrap;
+        }
+        .toolbar > * { pointer-events: auto; }
+        .search-box {
+            display: flex; align-items: center; background: var(--bg-white); border-radius: 10px;
+            box-shadow: var(--shadow-lg); overflow: hidden; min-width: 240px; flex: 1 1 240px; max-width: 360px;
+            border: 1px solid var(--border);
+        }
+        .search-box input { border: none; padding: 11px 14px; font-size: 14px; width: 100%; outline: none; background: transparent; color: var(--text-primary); }
+        .search-box button { padding: 11px 14px; border: none; background: var(--primary); color: white; cursor: pointer; }
+        .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+        .action-btn {
+            padding: 9px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 12px; font-weight: 600;
+            cursor: pointer; display: inline-flex; align-items: center; gap: 6px; background: var(--bg-white);
+            color: var(--text-primary); box-shadow: var(--shadow-md); transition: transform 0.15s, box-shadow 0.15s;
+        }
+        .action-btn:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+        .action-btn.primary { background: var(--primary); color: white; border-color: var(--primary); }
+        .action-btn.success { background: var(--success); color: white; border-color: var(--success); }
+
+        .legend-panel {
+            position: absolute; bottom: 18px; right: 18px; background: var(--bg-white); border-radius: 12px;
+            padding: 14px 16px; box-shadow: var(--shadow-xl); z-index: 50; min-width: 190px; border: 1px solid var(--border);
+        }
+        .legend-title { font-weight: 700; font-size: 11px; color: var(--text-secondary); margin-bottom: 10px; text-transform: uppercase; letter-spacing: .04em; }
+        .legend-item { display: flex; align-items: center; gap: 10px; padding: 4px 0; font-size: 12px; }
+        .legend-shape { flex-shrink: 0; }
+        .legend-shape.calc { width: 18px; height: 14px; background: #E3F2FD; border: 2px solid #0078d4; border-radius: 3px; }
+        .legend-shape.raw { width: 14px; height: 14px; background: #dcfce7; border: 2px solid #10b981; border-radius: 50%; }
+        .legend-shape.parameter { width: 14px; height: 14px; background: #fce7f3; border: 2px solid #ec4899; transform: rotate(45deg); }
+        .legend-shape.cluster { width: 16px; height: 16px; background: #ede9fe; border: 2px solid #8b5cf6; border-radius: 50%; }
+        .legend-shape.selected { width: 14px; height: 14px; background: #fee2e2; border: 3px solid #ef4444; border-radius: 50%; }
+        .legend-shape.connected { width: 14px; height: 14px; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 50%; }
+
+        .node-panel {
+            position: absolute; bottom: 18px; left: 18px; background: var(--bg-white); border-radius: 12px;
+            padding: 18px; box-shadow: var(--shadow-xl); z-index: 50; max-width: 420px; min-width: 300px;
+            display: none; border: 1px solid var(--border);
+        }
+        .node-panel.visible { display: block; }
+        .node-panel-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+        .node-panel-title { font-weight: 700; font-size: 16px; color: var(--primary); word-break: break-word; }
+        .node-panel-badges { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 6px; }
+        .node-panel-badge { font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+        .node-panel-badge.calc { background: #dbeafe; color: #1d4ed8; }
+        .node-panel-badge.raw { background: #dcfce7; color: #166534; }
+        .node-panel-badge.parameter { background: #fce7f3; color: #be185d; }
+        .node-panel-badge.lod { background: #fae8ff; color: #a21caf; }
+        .node-panel-badge.tablecalc { background: #fef3c7; color: #92400e; }
+        .node-panel-close { background: none; border: none; font-size: 22px; line-height: 1; color: var(--text-secondary); cursor: pointer; padding: 2px 6px; border-radius: 6px; }
+        .node-panel-close:hover { background: var(--bg-light); color: var(--text-primary); }
+        .node-panel-section { margin-top: 14px; }
+        .node-panel-label { font-size: 10px; color: var(--text-secondary); text-transform: uppercase; margin-bottom: 6px; font-weight: 700; letter-spacing: .04em; }
+        .node-panel-value { font-size: 13px; color: var(--text-primary); }
+        .formula-box {
+            background: #f8fafc; padding: 12px; border-radius: 8px; font-family: ui-monospace, 'Consolas', monospace;
+            font-size: 12px; white-space: pre-wrap; word-break: break-word; max-height: 150px; overflow-y: auto; border: 1px solid var(--border);
+        }
+        .deps-list { display: flex; flex-wrap: wrap; gap: 6px; }
+        .dep-tag { background: #eef2f7; padding: 4px 10px; border-radius: 6px; font-size: 11px; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; border: none; }
+        .dep-tag:hover { background: var(--primary); color: white; }
+        .dep-tag.param { background: #fce7f3; color: #be185d; }
+        .dep-tag.param:hover { background: #ec4899; color: white; }
+
+        #dictView { padding: 24px; overflow-y: auto; background: var(--bg-light); }
+        .dict-container { max-width: 960px; margin: 0 auto; }
+        .dict-search { width: 100%; padding: 14px 18px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; background: var(--bg-white); outline: none; margin-bottom: 20px; }
+        .dict-search:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 120, 212, 0.1); }
+        .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 12px; margin-bottom: 24px; }
+        .stat-card { background: var(--bg-white); padding: 14px; border-radius: 10px; box-shadow: var(--shadow-sm); border: 1px solid var(--border); text-align: center; }
+        .stat-value { font-size: 24px; font-weight: 800; color: var(--primary); }
+        .stat-label { font-size: 10px; color: var(--text-secondary); margin-top: 4px; text-transform: uppercase; letter-spacing: .04em; }
+
+        .ds-accordion { background: var(--bg-white); border-radius: 12px; margin-bottom: 12px; overflow: hidden; box-shadow: var(--shadow-sm); border: 1px solid var(--border); }
+        .ds-header { padding: 16px 20px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; list-style: none; }
+        .ds-header::-webkit-details-marker { display: none; }
+        .ds-header:hover { background: #f8fafc; }
+        .ds-info { display: flex; align-items: center; gap: 12px; }
+        .ds-icon { width: 36px; height: 36px; background: linear-gradient(135deg, var(--purple), #a78bfa); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-size: 16px; }
+        .ds-icon.param-icon { background: linear-gradient(135deg, var(--pink), #f472b6); }
+        .ds-name { font-weight: 600; font-size: 14px; }
+        .ds-meta { display: flex; align-items: center; gap: 12px; }
+        .ds-count { font-size: 12px; color: var(--text-secondary); background: var(--bg-light); padding: 4px 10px; border-radius: 20px; }
+        .ds-chevron { font-size: 12px; color: var(--text-secondary); transition: transform 0.2s; }
+        details[open] .ds-chevron { transform: rotate(90deg); }
+        details[open] .ds-header { border-bottom: 1px solid var(--border); }
+        .field-list { padding: 0; }
+        .field-card { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; }
+        .field-card:last-child { border-bottom: none; }
+        .field-card:hover { background: #f8fafc; }
+        .field-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; margin-bottom: 10px; }
+        .field-name { font-weight: 600; color: var(--primary); font-size: 14px; }
+        .field-actions { display: flex; gap: 8px; flex-shrink: 0; }
+        .field-btn { padding: 6px 12px; border: 1px solid var(--border); background: var(--bg-white); border-radius: 6px; font-size: 11px; cursor: pointer; }
+        .field-btn:hover { background: var(--primary); color: white; border-color: var(--primary); }
+        .field-formula { background: #f8fafc; padding: 12px; border-radius: 8px; font-family: ui-monospace, 'Consolas', monospace; font-size: 12px; white-space: pre-wrap; word-break: break-word; border: 1px solid var(--border); margin-bottom: 10px; }
+        .field-deps { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+        .field-deps-label { font-size: 11px; color: var(--text-secondary); margin-right: 4px; }
+        .param-card { padding: 12px 20px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+        .param-card:last-child { border-bottom: none; }
+        .param-info { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+        .param-name { font-weight: 600; color: var(--pink); font-size: 14px; }
+        .param-value { font-size: 12px; color: var(--text-secondary); }
+
+        #loading { position: fixed; inset: 0; background: var(--bg-white); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 1000; transition: opacity 0.4s; }
+        .spinner { width: 46px; height: 46px; border: 4px solid var(--bg-light); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { margin-top: 16px; color: var(--text-secondary); font-size: 14px; }
+
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(100px); background: var(--text-primary); color: white; padding: 12px 22px; border-radius: 8px; box-shadow: var(--shadow-xl); z-index: 1000; transition: transform 0.3s; font-size: 14px; }
+        .toast.visible { transform: translateX(-50%) translateY(0); }
+
+        .watermark {
+            position: fixed; bottom: 14px; left: 50%; transform: translateX(-50%);
+            z-index: 40; font-size: 11px; color: var(--text-secondary);
+            background: rgba(255,255,255,0.82); backdrop-filter: blur(4px);
+            border: 1px solid var(--border); border-radius: 999px; padding: 5px 14px;
+            box-shadow: var(--shadow-sm); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .watermark:hover { color: var(--primary); }
+        .watermark b { color: var(--primary); font-weight: 700; }
+
+        @media (max-width: 760px) {
+            .legend-panel { display: none; }
+            .node-panel { left: 12px; right: 12px; max-width: none; min-width: 0; bottom: 56px; }
+            .file-badge { max-width: 160px; }
+            .watermark { bottom: 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="loading">
+        <div class="spinner"></div>
+        <div class="loading-text">Mapping dependencies…</div>
+    </div>
+
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <div class="logo-icon" aria-hidden="true">📊</div>
+                <span>Tableau Lineage</span>
+            </div>
+            <div class="file-badge" title="__FILE_LABEL__">__FILE_LABEL__</div>
+        </div>
+        <div class="tabs" role="tablist" aria-label="Views">
+            <button class="tab-btn active" type="button" role="tab" aria-selected="true" id="tab-graph" onclick="switchView('graph', this)">🔗 Graph</button>
+            <button class="tab-btn" type="button" role="tab" aria-selected="false" id="tab-dict" onclick="switchView('dict', this)">📖 Dictionary</button>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <div id="graphView" class="view-panel active" role="tabpanel" aria-labelledby="tab-graph">
+            <div class="toolbar">
+                <div class="search-box">
+                    <input type="text" id="graphSearch" aria-label="Search fields in the graph" placeholder="Search fields…"
+                           onkeyup="if(event.key==='Enter')handleSearch()">
+                    <button type="button" aria-label="Search" onclick="handleSearch()">🔍</button>
+                </div>
+                <div class="btn-group">
+                    <button class="action-btn" type="button" onclick="resetGraph()">↺ Reset</button>
+                    <button class="action-btn" type="button" onclick="toggleClusters()">📦 Clusters</button>
+                    <button class="action-btn" type="button" onclick="fitGraph()">⛶ Fit</button>
+                    <button class="action-btn primary" type="button" onclick="togglePhysics()">⚡ Physics</button>
+                    <button class="action-btn success" type="button" onclick="exportCSV()">⬇ CSV</button>
+                </div>
+            </div>
+
+            <div id="network" role="img" aria-label="Interactive dependency graph of calculated fields, raw fields and parameters"></div>
+
+            <aside class="legend-panel" aria-label="Legend">
+                <div class="legend-title">Legend</div>
+                <div class="legend-item"><div class="legend-shape calc"></div><span>Calculated Field</span></div>
+                <div class="legend-item"><div class="legend-shape raw"></div><span>Raw Field</span></div>
+                <div class="legend-item"><div class="legend-shape parameter"></div><span>Parameter</span></div>
+                <div class="legend-item"><div class="legend-shape cluster"></div><span>Data Source</span></div>
+                <div class="legend-item"><div class="legend-shape selected"></div><span>Selected</span></div>
+                <div class="legend-item"><div class="legend-shape connected"></div><span>Connected</span></div>
+            </aside>
+
+            <div class="node-panel" id="nodePanel" role="dialog" aria-label="Field details">
+                <div class="node-panel-header">
+                    <div>
+                        <div class="node-panel-title" id="nodeName">-</div>
+                        <div class="node-panel-badges" id="nodeBadges"></div>
+                    </div>
+                    <button class="node-panel-close" type="button" aria-label="Close details" onclick="closePanel()">×</button>
+                </div>
+                <div class="node-panel-section">
+                    <div class="node-panel-label">Data Source</div>
+                    <div class="node-panel-value" id="nodeSource">-</div>
+                </div>
+                <div class="node-panel-section" id="paramValueSection" style="display:none;">
+                    <div class="node-panel-label">Current Value</div>
+                    <div class="node-panel-value" id="paramValue">-</div>
+                </div>
+                <div class="node-panel-section" id="formulaSection">
+                    <div class="node-panel-label">Formula</div>
+                    <div class="formula-box" id="nodeFormula">-</div>
+                </div>
+                <div class="node-panel-section" id="depsSection">
+                    <div class="node-panel-label">Dependencies</div>
+                    <div class="deps-list" id="nodeDeps"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="dictView" class="view-panel" role="tabpanel" aria-labelledby="tab-dict">
+            <div class="dict-container">
+                <input type="text" class="dict-search" id="dictSearch" aria-label="Search fields, parameters, or data sources"
+                       placeholder="Search fields, parameters, or data sources…" oninput="filterDict()">
+                <div class="stats-bar">
+                    <div class="stat-card"><div class="stat-value">__DS_COUNT__</div><div class="stat-label">Data Sources</div></div>
+                    <div class="stat-card"><div class="stat-value">__CALC_COUNT__</div><div class="stat-label">Calculated</div></div>
+                    <div class="stat-card"><div class="stat-value">__RAW_COUNT__</div><div class="stat-label">Raw Fields</div></div>
+                    <div class="stat-card"><div class="stat-value">__PARAM_COUNT__</div><div class="stat-label">Parameters</div></div>
+                    <div class="stat-card"><div class="stat-value">__LOD_COUNT__</div><div class="stat-label">LOD</div></div>
+                    <div class="stat-card"><div class="stat-value">__TABLECALC_COUNT__</div><div class="stat-label">Table Calcs</div></div>
+                </div>
+                <div id="dictContent"></div>
+            </div>
+        </div>
+    </main>
+
+    <a class="watermark" href="https://www.tableau-lineage.com" target="_blank" rel="noopener noreferrer">
+        Generated with <b>tableau-lineage.com</b>
+    </a>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script>
+        const data = __JSON_DATA__;
+        const parameters = __PARAMS_JSON__;
+
+        let network = null;
+        let nodesDS = new vis.DataSet();
+        let edgesDS = new vis.DataSet();
+        let physicsOn = true;
+        let clustered = false;
+        let selectedNode = null;
+        let nodeStyles = new Map();
+
+        const colors = {
+            calc: { background: '#E3F2FD', border: '#0078d4', highlight: { background: '#BBDEFB', border: '#0078d4' } },
+            raw: { background: '#dcfce7', border: '#10b981', highlight: { background: '#bbf7d0', border: '#10b981' } },
+            parameter: { background: '#fce7f3', border: '#ec4899', highlight: { background: '#fbcfe8', border: '#ec4899' } },
+            cluster: { background: '#ede9fe', border: '#8b5cf6', highlight: { background: '#ddd6fe', border: '#8b5cf6' } },
+            selected: { background: '#fee2e2', border: '#ef4444', highlight: { background: '#fecaca', border: '#ef4444' } },
+            connected: { background: '#fef3c7', border: '#f59e0b', highlight: { background: '#fde68a', border: '#f59e0b' } },
+            dimmed: { background: '#f1f5f9', border: '#cbd5e1' }
+        };
+
+        const parameterNames = new Set(parameters.map(p => p.name));
+        const parameterData = {};
+        parameters.forEach(p => { parameterData[p.name] = p; });
+
+        // Clean "sliders" glyph for parameters (replaces an emoji that read as a cross).
+        const PARAM_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="vertical-align:-2px"><path d="M5 21v-6M5 11V3M12 21v-9M12 8V3M19 21v-4M19 13V3"/><circle cx="5" cy="13" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="19" cy="15" r="2"/></svg>';
+
+        function init() {
+            buildDict();
+            buildGraph();
+            setTimeout(() => {
+                const loader = document.getElementById('loading');
+                if (!loader) return;
+                loader.style.opacity = '0';
+                setTimeout(() => loader.remove(), 400);
+            }, 600);
+        }
+
+        function buildGraph() {
+            const container = document.getElementById('network');
+            const added = new Set();
+            const calcNames = new Set(data.map(d => d.field_name));
+
+            data.forEach(item => {
+                if (!added.has(item.field_name)) {
+                    nodesDS.add({
+                        id: item.field_name, label: item.field_name, group: 'calc',
+                        datasource: item.datasource, formula: item.formula, ingredients: item.ingredients,
+                        paramDeps: item.parameter_dependencies || [], fieldType: item.field_type || 'calculated',
+                        isTableCalc: item.is_table_calc || false, lodType: item.lod_type || null, isParameter: false,
+                        title: item.field_name + '\n(' + item.datasource + ')'
+                    });
+                    added.add(item.field_name);
+                }
+                item.ingredients.forEach(ing => {
+                    if (!added.has(ing)) {
+                        const isCalc = calcNames.has(ing);
+                        const ingData = isCalc ? data.find(d => d.field_name === ing) : null;
+                        nodesDS.add({
+                            id: ing, label: ing, group: isCalc ? 'calc' : 'raw',
+                            datasource: ingData ? ingData.datasource : item.datasource,
+                            formula: ingData ? ingData.formula : null, ingredients: ingData ? ingData.ingredients : [],
+                            paramDeps: ingData ? (ingData.parameter_dependencies || []) : [],
+                            fieldType: ingData ? (ingData.field_type || 'calculated') : 'raw',
+                            isTableCalc: false, lodType: null, isParameter: false,
+                            title: ing + '\n(' + (ingData ? ingData.datasource : item.datasource) + ')'
+                        });
+                        added.add(ing);
+                    }
+                    edgesDS.add({ from: ing, to: item.field_name, arrows: 'to' });
+                });
+                (item.parameter_dependencies || []).forEach(param => {
+                    if (!added.has(param)) {
+                        const paramInfo = parameterData[param];
+                        nodesDS.add({
+                            id: param, label: param, group: 'parameter', datasource: 'Parameters',
+                            formula: null, ingredients: [], paramDeps: [], fieldType: 'parameter',
+                            isTableCalc: false, lodType: null, isParameter: true,
+                            paramValue: paramInfo ? paramInfo.value : null,
+                            paramDatatype: paramInfo ? paramInfo.datatype : null,
+                            title: param + '\n(Parameter)'
+                        });
+                        added.add(param);
+                    }
+                    edgesDS.add({ from: param, to: item.field_name, arrows: 'to' });
+                });
+            });
+
+            nodesDS.forEach(n => {
+                let nodeColor = colors.raw;
+                if (n.group === 'calc') nodeColor = colors.calc;
+                else if (n.group === 'parameter') nodeColor = colors.parameter;
+                nodeStyles.set(n.id, { color: nodeColor, font: { color: '#334155', size: 12 } });
+            });
+
+            const options = {
+                nodes: { borderWidth: 2, font: { size: 12, face: 'Inter, Segoe UI', color: '#334155' }, shadow: { enabled: true, color: 'rgba(0,0,0,0.08)', size: 8 } },
+                groups: {
+                    calc: { shape: 'box', color: colors.calc, margin: 10, borderWidth: 2 },
+                    raw: { shape: 'dot', size: 16, color: colors.raw },
+                    parameter: { shape: 'diamond', size: 18, color: colors.parameter, borderWidth: 2 }
+                },
+                edges: { smooth: { type: 'cubicBezier', roundness: 0.5 }, width: 1.5, color: { color: '#cbd5e1', hover: '#94a3b8', highlight: '#ef4444' }, arrows: { to: { scaleFactor: 0.8 } } },
+                physics: { enabled: true, stabilization: { enabled: true, iterations: 200, fit: true }, barnesHut: { gravitationalConstant: -3000, springLength: 120, springConstant: 0.04, damping: 0.3 } },
+                interaction: { hover: true, tooltipDelay: 150, keyboard: true, zoomSpeed: 0.3, zoomView: true, dragView: true }
+            };
+
+            network = new vis.Network(container, { nodes: nodesDS, edges: edgesDS }, options);
+            network.on('stabilizationIterationsDone', () => { network.setOptions({ physics: { stabilization: { enabled: false } } }); });
+            network.on('click', params => {
+                if (params.nodes.length > 0) {
+                    const nodeId = params.nodes[0];
+                    if (network.isCluster(nodeId)) {
+                        network.openCluster(nodeId); clustered = false;
+                        setTimeout(() => network.fit({ animation: true }), 100);
+                    } else { highlightNode(nodeId); showPanel(nodeId); }
+                } else { resetHighlight(); closePanel(); }
+            });
+            network.on('doubleClick', params => {
+                if (params.nodes.length > 0 && !network.isCluster(params.nodes[0])) {
+                    network.focus(params.nodes[0], { scale: 1.8, animation: { duration: 400 } });
+                }
+            });
+            setTimeout(() => clusterNodes(), 500);
+        }
+
+        function highlightNode(centerId) {
+            selectedNode = centerId;
+            const connected = new Set([centerId]);
+            const immediate = network.getConnectedNodes(centerId);
+            immediate.forEach(id => connected.add(id));
+            immediate.forEach(id => { network.getConnectedNodes(id).forEach(sid => connected.add(sid)); });
+            const nodeUpdates = [];
+            nodesDS.forEach(node => {
+                if (connected.has(node.id)) {
+                    const isCenter = node.id === centerId;
+                    const isImmediate = immediate.includes(node.id);
+                    nodeUpdates.push({ id: node.id, color: isCenter ? colors.selected : (isImmediate ? colors.connected : nodeStyles.get(node.id)?.color), font: { color: '#0f172a', size: isCenter ? 16 : (isImmediate ? 14 : 12), bold: isCenter || isImmediate }, borderWidth: isCenter ? 4 : (isImmediate ? 3 : 2) });
+                } else {
+                    nodeUpdates.push({ id: node.id, color: colors.dimmed, font: { color: '#94a3b8', size: 10 }, borderWidth: 1 });
+                }
+            });
+            nodesDS.update(nodeUpdates);
+            const edgeUpdates = [];
+            edgesDS.forEach(edge => {
+                const isConnected = connected.has(edge.from) && connected.has(edge.to);
+                const isImmediate = edge.from === centerId || edge.to === centerId;
+                edgeUpdates.push({ id: edge.id, color: { color: isImmediate ? '#ef4444' : (isConnected ? '#f59e0b' : '#e2e8f0') }, width: isImmediate ? 3 : (isConnected ? 2 : 0.5), hidden: !isConnected });
+            });
+            edgesDS.update(edgeUpdates);
+            network.focus(centerId, { scale: 1.3, animation: { duration: 500 } });
+        }
+
+        function resetHighlight() {
+            selectedNode = null;
+            const nodeUpdates = [];
+            nodesDS.forEach(node => {
+                const orig = nodeStyles.get(node.id);
+                nodeUpdates.push({ id: node.id, color: orig?.color || colors.raw, font: { color: '#334155', size: 12, bold: false }, borderWidth: 2 });
+            });
+            nodesDS.update(nodeUpdates);
+            const edgeUpdates = [];
+            edgesDS.forEach(edge => { edgeUpdates.push({ id: edge.id, color: { color: '#cbd5e1', highlight: '#ef4444' }, width: 1.5, hidden: false }); });
+            edgesDS.update(edgeUpdates);
+        }
+
+        function showPanel(nodeId) {
+            const node = nodesDS.get(nodeId);
+            if (!node) return;
+            document.getElementById('nodeName').textContent = node.label;
+            document.getElementById('nodeSource').textContent = node.datasource || '-';
+            let badgesHtml = '';
+            if (node.group === 'parameter' || node.isParameter) badgesHtml += '<span class="node-panel-badge parameter">Parameter</span>';
+            else if (node.group === 'calc') badgesHtml += '<span class="node-panel-badge calc">Calculated</span>';
+            else badgesHtml += '<span class="node-panel-badge raw">Raw Field</span>';
+            if (node.lodType) badgesHtml += '<span class="node-panel-badge lod">' + escHtml(node.lodType) + '</span>';
+            if (node.isTableCalc) badgesHtml += '<span class="node-panel-badge tablecalc">Table Calc</span>';
+            document.getElementById('nodeBadges').innerHTML = badgesHtml;
+            const paramValueSection = document.getElementById('paramValueSection');
+            if (node.isParameter && node.paramValue) {
+                paramValueSection.style.display = 'block';
+                document.getElementById('paramValue').textContent = node.paramValue + (node.paramDatatype ? ' (' + node.paramDatatype + ')' : '');
+            } else { paramValueSection.style.display = 'none'; }
+            const formulaSection = document.getElementById('formulaSection');
+            if (node.formula) { formulaSection.style.display = 'block'; document.getElementById('nodeFormula').textContent = node.formula; }
+            else { formulaSection.style.display = 'none'; }
+            const depsSection = document.getElementById('depsSection');
+            const allDeps = [...(node.ingredients || []), ...(node.paramDeps || [])];
+            if (allDeps.length > 0) {
+                depsSection.style.display = 'block';
+                document.getElementById('nodeDeps').innerHTML = allDeps.map(dep => {
+                    const isParam = parameterNames.has(dep);
+                    return '<button type="button" class="dep-tag' + (isParam ? ' param' : '') + '" onclick="goToNode(this.dataset.node)" data-node="' + escAttr(dep) + '">' + escHtml(dep) + '</button>';
+                }).join('');
+            } else { depsSection.style.display = 'none'; }
+            document.getElementById('nodePanel').classList.add('visible');
+        }
+
+        function closePanel() { document.getElementById('nodePanel').classList.remove('visible'); }
+
+        function goToNode(nodeId) {
+            const node = nodesDS.get(nodeId);
+            if (node) {
+                const clusterId = 'cluster_' + node.datasource;
+                if (network.body.nodes[clusterId]) { network.openCluster(clusterId); clustered = false; }
+                setTimeout(() => { highlightNode(nodeId); showPanel(nodeId); }, 100);
+            }
+        }
+
+        function clusterNodes() {
+            const sources = [...new Set(nodesDS.get().map(n => n.datasource))];
+            sources.forEach(ds => {
+                if (!ds) return;
+                network.cluster({
+                    joinCondition: opt => opt.datasource === ds,
+                    processProperties: (clusterOpt, childNodes) => {
+                        const isParamCluster = ds === 'Parameters';
+                        clusterOpt.label = ds; clusterOpt.color = isParamCluster ? colors.parameter : colors.cluster;
+                        clusterOpt.shape = 'dot'; clusterOpt.size = 30 + Math.min(childNodes.length * 2, 40);
+                        clusterOpt.font = { size: 14, bold: true, color: isParamCluster ? '#be185d' : '#5b21b6' };
+                        clusterOpt.title = ds + '\n(' + childNodes.length + ' items)'; clusterOpt.borderWidth = 3;
+                        return clusterOpt;
+                    },
+                    clusterNodeProperties: { id: 'cluster_' + ds }
+                });
+            });
+            clustered = true;
+        }
+
+        function toggleClusters() {
+            if (clustered) {
+                const clusterIds = network.body.nodeIndices.filter(id => network.isCluster(id));
+                clusterIds.forEach(id => network.openCluster(id));
+                clustered = false; toast('Clusters expanded');
+            } else { clusterNodes(); toast('Clusters collapsed'); }
+            setTimeout(() => network.fit({ animation: true }), 100);
+        }
+
+        function handleSearch() {
+            const term = document.getElementById('graphSearch').value.toLowerCase().trim();
+            if (!term) { toast('Enter a search term'); return; }
+            const matches = nodesDS.get().filter(n => n.label.toLowerCase().includes(term));
+            if (matches.length === 0) { toast('No matches found'); return; }
+            matches.forEach(m => { const clusterId = 'cluster_' + m.datasource; if (network.body.nodes[clusterId]) { network.openCluster(clusterId); clustered = false; } });
+            setTimeout(() => {
+                if (matches.length === 1) { highlightNode(matches[0].id); showPanel(matches[0].id); }
+                else {
+                    const matchIds = new Set(matches.map(m => m.id));
+                    const updates = [];
+                    nodesDS.forEach(n => { updates.push({ id: n.id, color: matchIds.has(n.id) ? colors.selected : colors.dimmed, font: { color: matchIds.has(n.id) ? '#0f172a' : '#94a3b8', size: matchIds.has(n.id) ? 14 : 10 }, borderWidth: matchIds.has(n.id) ? 3 : 1 }); });
+                    nodesDS.update(updates); toast('Found ' + matches.length + ' matches');
+                }
+                network.fit({ nodes: matches.map(m => m.id), animation: true });
+            }, 100);
+        }
+
+        function resetGraph() {
+            document.getElementById('graphSearch').value = '';
+            resetHighlight(); closePanel();
+            if (!clustered) clusterNodes();
+            setTimeout(() => network.fit({ animation: true }), 100);
+            toast('View reset');
+        }
+        function fitGraph() { network.fit({ animation: { duration: 400 } }); }
+        function togglePhysics() { physicsOn = !physicsOn; network.setOptions({ physics: { enabled: physicsOn } }); toast(physicsOn ? 'Physics ON' : 'Physics OFF'); }
+
+        function buildDict() {
+            const container = document.getElementById('dictContent');
+            let html = '';
+            if (parameters.length > 0) {
+                html += '<details class="ds-accordion" data-ds="parameters" open><summary class="ds-header"><div class="ds-info"><div class="ds-icon param-icon">' + PARAM_ICON + '</div><span class="ds-name">Parameters</span></div><div class="ds-meta"><span class="ds-count">' + parameters.length + ' parameters</span><span class="ds-chevron">▶</span></div></summary><div class="field-list">';
+                parameters.forEach(param => {
+                    const allowedVals = param.allowed_values ? param.allowed_values.map(v => v.alias || v.value).join(', ') : 'Any';
+                    html += '<div class="param-card" data-name="' + escAttr(param.name.toLowerCase()) + '"><div class="param-info"><div class="param-name">' + PARAM_ICON + ' ' + escHtml(param.name) + '</div><div class="param-value">Type: ' + escHtml(param.datatype) + ' | Current: ' + escHtml(param.value) + ' | Options: ' + escHtml(allowedVals) + '</div></div><button type="button" class="field-btn" data-node="' + escAttr(param.name) + '" onclick="viewInGraph(this.dataset.node)">Graph</button></div>';
+                });
+                html += '</div></details>';
+            }
+            const grouped = {};
+            data.forEach(item => { if (!grouped[item.datasource]) grouped[item.datasource] = []; grouped[item.datasource].push(item); });
+            for (const [ds, items] of Object.entries(grouped)) {
+                html += '<details class="ds-accordion" data-ds="' + escAttr(ds.toLowerCase()) + '" open><summary class="ds-header"><div class="ds-info"><div class="ds-icon">📁</div><span class="ds-name">' + escHtml(ds) + '</span></div><div class="ds-meta"><span class="ds-count">' + items.length + ' fields</span><span class="ds-chevron">▶</span></div></summary><div class="field-list">';
+                items.forEach(item => {
+                    const allDeps = [...(item.ingredients || []), ...(item.parameter_dependencies || [])];
+                    html += '<div class="field-card" data-name="' + escAttr(item.field_name.toLowerCase()) + '"><div class="field-header"><div class="field-name">ƒx ' + escHtml(item.field_name) + '</div><div class="field-actions"><button type="button" class="field-btn" data-formula="' + escAttr(item.formula) + '" onclick="copyText(this.dataset.formula)">Copy</button><button type="button" class="field-btn" data-node="' + escAttr(item.field_name) + '" onclick="viewInGraph(this.dataset.node)">Graph</button></div></div><div class="field-formula">' + escHtml(item.formula) + '</div>';
+                    if (allDeps.length > 0) {
+                        html += '<div class="field-deps"><span class="field-deps-label">Uses:</span>' + allDeps.map(dep => {
+                            const isParam = parameterNames.has(dep);
+                            return '<button type="button" class="dep-tag' + (isParam ? ' param' : '') + '" data-node="' + escAttr(dep) + '" onclick="viewInGraph(this.dataset.node)">' + escHtml(dep) + '</button>';
+                        }).join('') + '</div>';
+                    }
+                    html += '</div>';
+                });
+                html += '</div></details>';
+            }
+            container.innerHTML = html || '<div style="text-align:center;padding:40px;color:#64748b;">No fields found</div>';
+        }
+
+        function filterDict() {
+            const term = document.getElementById('dictSearch').value.toLowerCase();
+            const groups = document.querySelectorAll('.ds-accordion');
+            groups.forEach(group => {
+                const dsName = group.getAttribute('data-ds');
+                const cards = group.querySelectorAll('.field-card, .param-card');
+                let hasVisible = false;
+                if (dsName.includes(term)) { group.style.display = 'block'; cards.forEach(c => c.style.display = ''); if (term) group.open = true; return; }
+                cards.forEach(card => { const name = card.getAttribute('data-name'); const visible = name && name.includes(term); card.style.display = visible ? '' : 'none'; if (visible) hasVisible = true; });
+                group.style.display = hasVisible ? 'block' : 'none';
+                if (hasVisible && term) group.open = true;
+            });
+        }
+
+        function viewInGraph(fieldName) {
+            switchView('graph', document.getElementById('tab-graph'));
+            document.getElementById('graphSearch').value = fieldName;
+            setTimeout(() => {
+                const node = nodesDS.get().find(n => n.label === fieldName);
+                if (node) {
+                    const clusterId = 'cluster_' + node.datasource;
+                    if (network.body.nodes[clusterId]) { network.openCluster(clusterId); clustered = false; }
+                    setTimeout(() => { highlightNode(node.id); showPanel(node.id); }, 150);
+                }
+            }, 100);
+        }
+
+        function switchView(view, btn) {
+            document.querySelectorAll('.view-panel').forEach(el => el.classList.remove('active'));
+            document.getElementById(view + 'View').classList.add('active');
+            document.querySelectorAll('.tab-btn').forEach(el => { el.classList.remove('active'); el.setAttribute('aria-selected', 'false'); });
+            btn.classList.add('active'); btn.setAttribute('aria-selected', 'true');
+            if (view === 'graph') setTimeout(() => network.fit({ animation: true }), 100);
+        }
+
+        function exportCSV() {
+            const headers = ['Data Source', 'Field Name', 'Type', 'Formula', 'Field Dependencies', 'Parameter Dependencies'];
+            const rows = data.map(item => [
+                '"' + (item.datasource || '').replace(/"/g, '""') + '"',
+                '"' + (item.field_name || '').replace(/"/g, '""') + '"',
+                '"' + (item.field_type || '').replace(/"/g, '""') + '"',
+                '"' + (item.formula || '').replace(/"/g, '""') + '"',
+                '"' + (item.ingredients || []).join(', ') + '"',
+                '"' + (item.parameter_dependencies || []).join(', ') + '"'
+            ]);
+            const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), 'tableau_lineage.csv');
+            toast('CSV exported');
+        }
+
+        // Bridge for the host app's clickable stat cards: highlight nodes by type.
+        function highlightByType(type) {
+            if (!network) return;
+            switchView('graph', document.getElementById('tab-graph'));
+            network.body.nodeIndices.filter(id => network.isCluster(id)).forEach(id => network.openCluster(id));
+            clustered = false;
+            closePanel();
+            if (!type || type === 'reset') { resetHighlight(); setTimeout(() => network.fit({ animation: true }), 80); return; }
+            const match = new Set();
+            nodesDS.forEach(n => {
+                let m = false;
+                if (type === 'calc') m = n.group === 'calc';
+                else if (type === 'raw') m = n.group === 'raw';
+                else if (type === 'parameter') m = n.group === 'parameter' || n.isParameter;
+                else if (type === 'lod') m = !!n.lodType;
+                else if (type === 'table_calc') m = !!n.isTableCalc;
+                else if (type === 'datasource') m = !!n.datasource && n.datasource !== 'Parameters';
+                if (m) match.add(n.id);
+            });
+            const nu = [];
+            nodesDS.forEach(n => {
+                const on = match.has(n.id);
+                nu.push({ id: n.id, color: on ? colors.selected : colors.dimmed, font: { color: on ? '#0f172a' : '#94a3b8', size: on ? 13 : 10, bold: on }, borderWidth: on ? 3 : 1 });
+            });
+            nodesDS.update(nu);
+            const eu = [];
+            edgesDS.forEach(e => { const both = match.has(e.from) && match.has(e.to); eu.push({ id: e.id, color: { color: both ? '#f59e0b' : '#e8edf3' }, width: both ? 2 : 0.5, hidden: false }); });
+            edgesDS.update(eu);
+            if (match.size) setTimeout(() => network.fit({ nodes: [...match], animation: true }), 80);
+        }
+        window.tlHighlightType = highlightByType;
+
+        function downloadBlob(blob, name) {
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = name;
+            link.click();
+            setTimeout(() => URL.revokeObjectURL(link.href), 1000);
+        }
+
+        function copyText(text) { navigator.clipboard.writeText(text).then(() => toast('Copied!')).catch(() => toast('Copy failed')); }
+
+        function escHtml(text) { if (text === null || text === undefined) return ''; const div = document.createElement('div'); div.textContent = String(text); return div.innerHTML; }
+        function escAttr(text) { return escHtml(text).replace(/"/g, '&quot;'); }
+
+        function toast(msg) {
+            const t = document.getElementById('toast');
+            t.textContent = msg; t.classList.add('visible');
+            clearTimeout(t._timer);
+            t._timer = setTimeout(() => t.classList.remove('visible'), 2400);
+        }
+
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { resetHighlight(); closePanel(); }
+            if ((e.ctrlKey || e.metaKey) && e.key === 'f') { e.preventDefault(); document.getElementById('graphSearch').focus(); }
+        });
+
+        if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+        else init();
+    </script>
+</body>
+</html>

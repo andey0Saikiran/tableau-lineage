@@ -1,0 +1,33 @@
+{
+  "name": "tableau-lineage",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Privacy-first, fully client-side visualizer for Tableau workbook (.twbx) field lineage, calculated-field dependencies, and metadata.",
+  "type": "module",
+  "license": "MIT",
+  "homepage": "https://www.tableau-lineage.com",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "test:core": "node --experimental-strip-types scripts/test-extractor.mts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "fflate": "^0.8.2",
+    "lucide-react": "^1.21.0",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@vitejs/plugin-react": "^4.3.4",
+    "@xmldom/xmldom": "^0.9.6",
+    "autoprefixer": "^10.4.20",
+    "postcss": "^8.4.49",
+    "tailwindcss": "^3.4.17",
+    "typescript": "^5.7.2",
+    "vite": "^6.0.5"
+  }
+}
