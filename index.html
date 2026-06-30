@@ -6,10 +6,10 @@
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#0ea5e9" />
 
-    <title>Tableau Lineage Visualizer — see the dependencies inside any .twbx, in your browser</title>
+    <title>Tableau Lineage Visualizer: .twbx calculated-field dependencies, in your browser</title>
     <meta
       name="description"
-      content="A privacy-first web app that visualizes the field-level lineage, calculated-field dependencies, and metadata inside any Tableau workbook (.twbx) — entirely in your browser. Nothing is uploaded."
+      content="Free, open-source tool to map the field-level lineage, calculated-field dependencies, parameters, and metadata inside any Tableau .twbx workbook. Runs entirely in your browser, nothing is uploaded."
     />
     <link rel="canonical" href="https://tableau-lineage.com/" />
 
@@ -19,18 +19,18 @@
     <meta property="og:title" content="Tableau Lineage Visualizer" />
     <meta
       property="og:description"
-      content="Map calculated-field dependencies and metadata inside any Tableau .twbx — 100% in your browser. No upload, no tracking."
+      content="Map calculated-field dependencies and metadata inside any Tableau .twbx, 100% in your browser. No upload, no tracking."
     />
     <meta property="og:url" content="https://tableau-lineage.com/" />
     <meta property="og:image" content="https://tableau-lineage.com/og.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Tableau Lineage Visualizer — see the dependencies inside any Tableau workbook" />
+    <meta property="og:image:alt" content="Tableau Lineage Visualizer: see the dependencies inside any Tableau workbook" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Tableau Lineage Visualizer" />
     <meta
       name="twitter:description"
-      content="Map calculated-field dependencies and metadata inside any Tableau .twbx — 100% in your browser."
+      content="Map calculated-field dependencies and metadata inside any Tableau .twbx, 100% in your browser."
     />
     <meta name="twitter:image" content="https://tableau-lineage.com/og.jpg" />
 
@@ -50,7 +50,7 @@
         "applicationCategory": "BusinessApplication",
         "operatingSystem": "Any (web browser)",
         "browserRequirements": "Requires a modern web browser. No installation.",
-        "description": "A privacy-first web app that visualizes the field-level lineage, calculated-field dependencies, and metadata inside any Tableau workbook (.twbx) — entirely in your browser. Nothing is uploaded.",
+        "description": "A privacy-first web app that visualizes the field-level lineage, calculated-field dependencies, and metadata inside any Tableau workbook (.twbx), entirely in your browser. Nothing is uploaded.",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
         "isAccessibleForFree": true,
         "creator": {
@@ -58,6 +58,64 @@
           "name": "Sai Kiran Andey",
           "url": "https://www.linkedin.com/in/andeysaikiran/"
         }
+      }
+    </script>
+
+    <!-- FAQ structured data (mirrors the on-page FAQ; keep in sync with SeoContent.tsx) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is a .twbx file?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "A .twbx is a Tableau packaged workbook. It is a single ZIP archive that bundles the workbook definition (a .twb XML file) together with its data extracts, images, and other resources, so an entire dashboard can be shared as one file."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I see calculated field dependencies in a Tableau workbook?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Drop the .twbx into Tableau Lineage Visualizer and it reads every calculated field, parameter, and data source, then draws the dependencies as an interactive graph. You can trace which fields feed a calculation, follow a parameter through the logic, and search the full data dictionary instead of clicking through the workbook by hand."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is it safe to open or upload a .twbx file online?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "With this tool there is no upload at all. The file is read and parsed entirely in your browser, so your workbook and any data inside it never leave your computer. Because the project is open source, you can verify for yourself that there is no server to send the file to."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I view a Tableau workbook without Tableau Desktop?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. You do not need a Tableau license or any installation to inspect the structure of a workbook. This tool opens the packaged workbook in any modern browser and shows its fields, calculations, parameters, and lineage."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "What does the dependency graph show?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Every field becomes a node: raw fields, calculated fields, parameters, level-of-detail (LOD) expressions, and table calculations, with edges showing what depends on what. Click a category to highlight just those nodes, or open the searchable dictionary to read each formula."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Is it free, and how is it different from Tableau Catalog?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "It is completely free and open source. Tableau Catalog is a strong option for organization-wide lineage if you have Data Management licensed and your content is published to Tableau Server or Cloud. This tool covers a narrower job: calculated-field and parameter lineage for a single .twbx file on your own machine, with nothing uploaded."
+            }
+          }
+        ]
       }
     </script>
 

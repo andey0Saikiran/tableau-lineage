@@ -6,6 +6,7 @@ import { FileUpload } from './components/FileUpload';
 import { HeroGraph } from './components/HeroGraph';
 import { StatsGrid, type HighlightType } from './components/StatsGrid';
 import { ResultActions } from './components/ResultActions';
+import { SeoContent } from './components/SeoContent';
 import { VisualizerFrame } from './components/VisualizerFrame';
 import { AboutPanel, PrivacyPanel } from './components/Panels';
 import { BackgroundEffects } from './components/BackgroundEffects';
@@ -92,6 +93,7 @@ export default function App() {
 
       <main className="relative z-10 flex-1">
         {!showResults ? (
+          <>
           <section className="mx-auto grid max-w-6xl items-center gap-8 px-5 py-8 lg:min-h-[calc(100vh-65px)] lg:grid-cols-2 lg:gap-14 lg:py-0">
             {/* Pitch + how-it-works (second on mobile so the upload is reached first) */}
             <div className="order-2 lg:order-1">
@@ -142,6 +144,8 @@ export default function App() {
               />
             </div>
           </section>
+          <SeoContent />
+          </>
         ) : (
           <section className="mx-auto max-w-[96rem] space-y-5 px-4 pb-12 pt-8 sm:px-6">
             <div className="flex items-center gap-2 text-sm text-muted">
