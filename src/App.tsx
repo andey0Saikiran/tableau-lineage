@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { FileUp, Cpu, Share2 } from 'lucide-react';
 import { Header } from './components/Header';
+import { AnnouncementBar } from './components/AnnouncementBar';
 import { Footer } from './components/Footer';
 import { FileUpload } from './components/FileUpload';
 import { HeroGraph } from './components/HeroGraph';
@@ -82,6 +83,8 @@ export default function App() {
   return (
     <div className="relative flex min-h-screen flex-col">
       <BackgroundEffects />
+
+      <AnnouncementBar />
 
       <Header
         t={t}
