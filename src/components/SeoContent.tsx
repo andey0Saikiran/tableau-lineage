@@ -28,6 +28,29 @@ const FAQS = [
     q: 'Is it free, and how is it different from Tableau Catalog?',
     a: 'It is completely free and open source. Tableau Catalog is a strong option for organization-wide lineage if you have Data Management licensed and your content is published to Tableau Server or Cloud. This tool covers a narrower job: calculated-field and parameter lineage for a single .twbx file on your own machine, with nothing uploaded.',
   },
+  {
+    q: 'Can my AI assistant (Claude, Cursor) read Tableau workbooks with this?',
+    a: (
+      <>
+        Yes. The same engine ships as an MCP server,{' '}
+        <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[13px] text-ink">
+          tableau-lineage-mcp
+        </code>
+        , so assistants like Claude and Cursor can list calculated fields, read formulas, and trace
+        dependencies from a workbook on your disk. It runs locally on your machine, so the file is
+        still never uploaded.{' '}
+        <a
+          href="https://github.com/andey0Saikiran/tableau-lineage/tree/main/mcp"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-medium text-brand-600 underline decoration-brand-400/50 underline-offset-2 hover:text-brand-700"
+        >
+          Setup instructions on GitHub
+        </a>
+        .
+      </>
+    ),
+  },
 ];
 
 export function SeoContent() {

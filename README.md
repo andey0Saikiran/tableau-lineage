@@ -70,6 +70,19 @@ Vite · React 19 · TypeScript · Tailwind CSS · [fflate](https://github.com/10
 (unzip) · native DOMParser (XML) · [vis-network](https://visjs.github.io/vis-network/)
 (graph). No backend.
 
+## MCP server (for AI assistants)
+
+The same extraction engine ships as an MCP server, so Claude, Cursor, and other MCP
+clients can read calculated-field dependencies, formulas, and parameters straight from a
+workbook on your disk — still 100% local, nothing uploaded.
+
+```bash
+claude mcp add tableau-lineage -- npx -y tableau-lineage-mcp
+```
+
+Tools: `analyze_workbook`, `list_calculated_fields`, `get_field`, `trace_dependencies`,
+`list_parameters`, `get_lineage_graph`. Full docs in [`mcp/`](mcp/).
+
 ## Run locally
 
 ```bash

@@ -1,4 +1,4 @@
-import { ShieldCheck } from 'lucide-react';
+import { ShieldCheck, Terminal } from 'lucide-react';
 import { Github, Linkedin } from './BrandIcons';
 import { CREATOR, CONTRIBUTORS, REPO_URL, type Person } from '../lib/site';
 import type { TranslationKey } from '../lib/i18n';
@@ -56,14 +56,24 @@ export function Footer({ t }: { t: (k: TranslationKey) => string }) {
             )}
           </div>
 
-          <a
-            href={REPO_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-brand-600"
-          >
-            <Github className="h-4 w-4" /> Open source on GitHub
-          </a>
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-1.5">
+            <a
+              href={REPO_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-brand-600"
+            >
+              <Github className="h-4 w-4" /> Open source on GitHub
+            </a>
+            <a
+              href={`${REPO_URL}/tree/main/mcp`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-brand-600"
+            >
+              <Terminal className="h-4 w-4" /> MCP server for AI assistants
+            </a>
+          </div>
         </div>
       </div>
     </footer>
