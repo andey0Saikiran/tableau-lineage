@@ -1,0 +1,9 @@
+# Security policy for tableau-lineage.com (RFC 9116)
+# The app is fully client-side and open source; reports welcome.
+
+Contact: https://github.com/andey0Saikiran/tableau-lineage/security/advisories/new
+Contact: https://github.com/andey0Saikiran/tableau-lineage/issues
+Expires: 2027-07-12T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://tableau-lineage.com/.well-known/security.txt
+Policy: https://github.com/andey0Saikiran/tableau-lineage#readme
