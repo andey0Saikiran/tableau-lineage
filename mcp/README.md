@@ -1,10 +1,10 @@
 # tableau-lineage-mcp
 
-**Let your AI assistant read the lineage inside Tableau workbooks — without the workbook ever leaving your machine.**
+**Let your AI assistant read the lineage inside Tableau workbooks without the workbook ever leaving your machine.**
 
 An [MCP](https://modelcontextprotocol.io) server that parses local Tableau workbooks (`.twbx` / `.twb`) and exposes their calculated-field dependencies, formulas, parameters, and full lineage graph as tools for Claude, Cursor, and any other MCP client.
 
-It is the same open-source extraction engine that powers [tableau-lineage.com](https://tableau-lineage.com), wrapped for AI assistants. Parsing happens **in-process on your machine**: no upload, no server, no account. When reading a `.twbx`, only the workbook XML is decompressed — the bundled data extract is never touched.
+It is the same open-source extraction engine that powers [tableau-lineage.com](https://tableau-lineage.com), wrapped for AI assistants. Parsing happens **in-process on your machine**: no upload, no server, no account. When reading a `.twbx`, only the workbook XML is decompressed; the bundled data extract is never touched.
 
 ## What you can ask your assistant
 
@@ -66,7 +66,7 @@ Because this package is open source, you can verify all of the above in [the cod
 
 ## Prefer a UI?
 
-The same engine runs as a free web app at **[tableau-lineage.com](https://tableau-lineage.com)** — drag a `.twbx` in and get an interactive lineage graph and searchable data dictionary, 100% in your browser.
+The same engine runs as a free web app at **[tableau-lineage.com](https://tableau-lineage.com)**: drag a `.twbx` in and get an interactive lineage graph and searchable data dictionary, 100% in your browser.
 
 ## Development
 
