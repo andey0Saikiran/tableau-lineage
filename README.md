@@ -81,7 +81,8 @@ claude mcp add tableau-lineage -- npx -y tableau-lineage-mcp
 ```
 
 Tools: `analyze_workbook`, `list_calculated_fields`, `get_field`, `trace_dependencies`,
-`list_parameters`, `get_lineage_graph`. Full docs in [`mcp/`](mcp/).
+`list_parameters`, `get_lineage_graph`, `list_sql_queries` (Custom SQL, Initial SQL,
+stored procs, `RAWSQL_*`). Full docs in [`mcp/`](mcp/).
 
 ## Run locally
 

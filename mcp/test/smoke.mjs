@@ -65,8 +65,8 @@ try {
   const tools = await rpc('tools/list', {});
   const names = tools.tools.map((t) => t.name).sort();
   check(
-    'exposes all 6 tools',
-    ['analyze_workbook', 'get_field', 'get_lineage_graph', 'list_calculated_fields', 'list_parameters', 'trace_dependencies']
+    'exposes all 7 tools',
+    ['analyze_workbook', 'get_field', 'get_lineage_graph', 'list_calculated_fields', 'list_parameters', 'list_sql_queries', 'trace_dependencies']
       .every((n) => names.includes(n)),
     names.join(', '),
   );
@@ -91,6 +91,27 @@ try {
 
   const filtered = jsonOf(await rpc('tools/call', { name: 'list_calculated_fields', arguments: { path: demoTwbx, filter: someCalc.slice(0, 4) } }));
   check('list_calculated_fields filter works', filtered.count >= 1, `${filtered.count} match(es)`);
+
+  // ── SQL extraction ──────────────────────────────────────────────────────────
+  const sqlFixture = path.join(here, '..', '..', 'test', 'fixtures', 'custom-sql.twbx');
+  const sql = jsonOf(await rpc('tools/call', { name: 'list_sql_queries', arguments: { path: sqlFixture } }));
+  check('finds the Custom SQL query', sql.custom_sql?.length === 1 && /JOIN\s+customers/i.test(sql.custom_sql[0].sql),
+    sql.custom_sql?.[0]?.relation_name);
+  check('custom SQL maps to its connection', sql.custom_sql?.[0]?.connection?.class === 'postgres'
+    && sql.custom_sql?.[0]?.connection?.dbname === 'analytics');
+  check('finds Initial SQL', sql.initial_sql?.length === 1 && /SET search_path/i.test(sql.initial_sql[0].sql));
+  check('finds the stored procedure + params', sql.stored_procedures?.[0]?.name === 'sp_monthly_sales'
+    && sql.stored_procedures?.[0]?.parameters?.length === 2, JSON.stringify(sql.stored_procedures?.[0]?.parameters));
+  check('finds the RAWSQL calculated field', sql.rawsql_calculations?.length === 1
+    && /RAWSQLAGG_REAL/.test(sql.rawsql_calculations[0].formula), sql.rawsql_calculations?.[0]?.field_name);
+  check('ordinary calc is NOT flagged as RAWSQL', !sql.rawsql_calculations?.some((f) => f.field_name === 'Amount With Tax'));
+
+  const sqlTwb = jsonOf(await rpc('tools/call', { name: 'list_sql_queries', arguments: { path: sqlFixture.replace(/\.twbx$/, '.twb') } }));
+  check('same results from the bare .twb', sqlTwb.custom_sql?.length === 1 && sqlTwb.has_sql === true);
+
+  const noSql = jsonOf(await rpc('tools/call', { name: 'list_sql_queries', arguments: { path: demoTwbx } }));
+  check('demo workbook reports NO stored SQL (no false positives)', noSql.has_sql === false
+    && noSql.custom_sql.length === 0 && noSql.note?.length > 0);
 
   const missing = await rpc('tools/call', { name: 'get_field', arguments: { path: demoTwbx, field: 'No Such Field Xyz' } });
   check('unknown field returns a clean error', missing.isError === true, textOf(missing).slice(0, 60));

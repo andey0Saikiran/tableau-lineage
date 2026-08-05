@@ -330,7 +330,7 @@ export function extractFromXml(xmlString: string, fileLabel = 'Tableau Workbook'
   };
 }
 
-const MAX_TWB_BYTES = 80 * 1024 * 1024; // guardrail: DOMParser holds the whole tree in memory
+const MAX_TWB_BYTES = 250 * 1024 * 1024; // guardrail: DOMParser holds the whole tree in memory
 
 /**
  * Full browser entry point: unzip a .twbx ArrayBuffer, find its .twb, and

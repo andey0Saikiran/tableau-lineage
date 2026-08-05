@@ -1,0 +1,57 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<workbook source-build='2024.1.2 (20241.24.0314.1200)' version='18.1' xmlns:user='http://www.tableausoftware.com/xml/user'>
+  <preferences />
+  <datasources>
+    <datasource caption='Sales (Custom SQL)' inline='true' name='federated.0abc123' version='18.1'>
+      <connection class='federated'>
+        <named-connections>
+          <named-connection caption='analytics-db' name='postgres.1def456'>
+            <connection class='postgres' dbname='analytics' one-time-sql='SET search_path TO sales, public;' port='5432' server='db.internal.example.com' username='readonly' />
+          </named-connection>
+        </named-connections>
+        <relation connection='postgres.1def456' name='Custom SQL Query' type='text'>SELECT o.order_id,
+       o.customer_id,
+       o.amount,
+       c.region
+FROM   orders o
+JOIN   customers c ON c.id = o.customer_id
+WHERE  o.created_at &gt;= DATE '2024-01-01'</relation>
+      </connection>
+      <column caption='Order ID' datatype='integer' name='[order_id]' role='dimension' type='ordinal' />
+      <column caption='Amount' datatype='real' name='[amount]' role='measure' type='quantitative' />
+      <column caption='Region Revenue (RAWSQL)' datatype='real' name='[Calculation_111]' role='measure' type='quantitative'>
+        <calculation class='tableau' formula='RAWSQLAGG_REAL(&quot;SUM(%1)&quot;, [amount])' />
+      </column>
+      <column caption='Amount With Tax' datatype='real' name='[Calculation_222]' role='measure' type='quantitative'>
+        <calculation class='tableau' formula='[amount] * 1.0825' />
+      </column>
+    </datasource>
+    <datasource caption='Legacy Warehouse (Stored Proc)' inline='true' name='federated.9zzz888' version='18.1'>
+      <connection class='federated'>
+        <named-connections>
+          <named-connection caption='warehouse-sql' name='sqlserver.5ghi789'>
+            <connection class='sqlserver' dbname='warehouse' server='sql01.example.com' />
+          </named-connection>
+        </named-connections>
+        <relation connection='sqlserver.5ghi789' name='sp_monthly_sales' type='stored-proc'>
+          <actual-parameters>
+            <column name='@year' value='2024' />
+            <column name='@region' value='WEST' />
+          </actual-parameters>
+        </relation>
+      </connection>
+      <column caption='Monthly Total' datatype='real' name='[monthly_total]' role='measure' type='quantitative' />
+    </datasource>
+  </datasources>
+  <worksheets>
+    <worksheet name='Overview'>
+      <table>
+        <view>
+          <datasource-dependencies datasource='federated.0abc123'>
+            <column caption='Amount' datatype='real' name='[amount]' role='measure' type='quantitative' />
+          </datasource-dependencies>
+        </view>
+      </table>
+    </worksheet>
+  </worksheets>
+</workbook>

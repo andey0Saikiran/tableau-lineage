@@ -14,9 +14,11 @@ import { DOMParser } from '@xmldom/xmldom';
 (globalThis as unknown as { DOMParser: unknown }).DOMParser = DOMParser;
 
 import { extractFromTwbx, extractFromXml, TableauExtractionError } from '../../src/lib/extractor';
+import { extractSqlFromTwbx, extractSqlFromXml } from '../../src/lib/sqlExtractor';
+import type { SqlExtractResult } from '../../src/lib/sqlExtractor';
 import type { CalculatedField, ExtractResult } from '../../src/lib/types';
 
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 
 // ── Workbook loading (cached by path + mtime + size) ──────────────────────────
 
@@ -43,6 +45,32 @@ function loadWorkbook(inputPath: string): ExtractResult {
     throw new Error(`Unsupported file type (expected .twbx or .twb): ${abs}`);
   }
   cache.set(abs, { mtimeMs: st.mtimeMs, size: st.size, result });
+  return result;
+}
+
+const sqlCache = new Map<string, { mtimeMs: number; size: number; result: SqlExtractResult }>();
+
+function loadSql(inputPath: string): SqlExtractResult {
+  const abs = path.resolve(inputPath);
+  if (!fs.existsSync(abs)) {
+    throw new Error(`File not found: ${abs}`);
+  }
+  const st = fs.statSync(abs);
+  const hit = sqlCache.get(abs);
+  if (hit && hit.mtimeMs === st.mtimeMs && hit.size === st.size) return hit.result;
+
+  const lower = abs.toLowerCase();
+  let result: SqlExtractResult;
+  if (lower.endsWith('.twb')) {
+    result = extractSqlFromXml(fs.readFileSync(abs, 'utf8'), path.basename(abs).replace(/\.twb$/i, ''));
+  } else if (lower.endsWith('.twbx')) {
+    const buf = fs.readFileSync(abs);
+    const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+    result = extractSqlFromTwbx(ab, path.basename(abs));
+  } else {
+    throw new Error(`Unsupported file type (expected .twbx or .twb): ${abs}`);
+  }
+  sqlCache.set(abs, { mtimeMs: st.mtimeMs, size: st.size, result });
   return result;
 }
 
@@ -360,6 +388,40 @@ server.registerTool(
         edge_count: edges.length,
         nodes: [...nodes.values()],
         edges,
+      });
+    } catch (e) {
+      return fail(e);
+    }
+  },
+);
+
+server.registerTool(
+  'list_sql_queries',
+  {
+    title: 'List the SQL stored in the workbook',
+    description:
+      'Extract every SQL statement the workbook contains: Custom SQL relations (with the full query text), Initial SQL run when a connection opens, stored-procedure references with their parameters, and RAWSQL_* calculated fields. Each entry names the datasource and the database connection (class, server, dbname) it targets. Note: queries Tableau auto-generates at runtime for live connections are not stored in the file, so they cannot be extracted.',
+    inputSchema: { path: pathArg },
+  },
+  async ({ path: p }) => {
+    try {
+      const r = loadSql(p);
+      return ok({
+        workbook: r.fileLabel,
+        has_sql: r.has_sql,
+        summary: {
+          custom_sql_queries: r.custom_sql.length,
+          initial_sql_statements: r.initial_sql.length,
+          stored_procedures: r.stored_procedures.length,
+          rawsql_calculations: r.rawsql_calculations.length,
+        },
+        custom_sql: r.custom_sql,
+        initial_sql: r.initial_sql,
+        stored_procedures: r.stored_procedures,
+        rawsql_calculations: r.rawsql_calculations,
+        note: r.has_sql
+          ? undefined
+          : 'No stored SQL found. This workbook likely uses direct table relations or extracts; runtime-generated queries for live connections are never stored in the file.',
       });
     } catch (e) {
       return fail(e);

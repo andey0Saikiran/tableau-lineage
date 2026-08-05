@@ -51,7 +51,7 @@ const en = {
   jsonDownloaded: 'JSON downloaded',
 
   invalidFile: 'Please choose a valid .twbx file',
-  fileTooLarge: 'That file is larger than 100 MB',
+  fileTooLarge: 'That file is larger than 500 MB',
   processingError: 'Could not read this workbook',
   noCalcFields: 'No calculated fields were found in this workbook',
 

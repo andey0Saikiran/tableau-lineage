@@ -12,7 +12,10 @@ It is the same open-source extraction engine that powers [tableau-lineage.com](h
 - *"What breaks if I change `[Revenue Base]`?"* (transitive impact analysis)
 - *"List every LOD expression in this workbook with its formula."*
 - *"Which calculated fields use the `Date Granularity` parameter?"*
+- *"Show me the Custom SQL this workbook runs, and which database it hits."*
 - *"Document all calculations in this workbook as a data dictionary."*
+
+Note on SQL: the workbook stores the SQL its author wrote (Custom SQL, Initial SQL, stored procs, `RAWSQL_*`). Queries Tableau auto-generates at runtime for live connections are not saved in the file, so no tool can extract those from a `.twbx`.
 
 ## Install
 
@@ -53,6 +56,7 @@ Requires Node.js 18+.
 | `trace_dependencies` | Upstream tree (down to raw columns and parameters) + transitive downstream impact |
 | `list_parameters` | Parameters with values, datatypes, allowed values, and which fields use them |
 | `get_lineage_graph` | The complete dependency graph as nodes + edges JSON |
+| `list_sql_queries` | Every SQL statement stored in the workbook: Custom SQL (full query text), Initial SQL, stored-procedure references with parameters, and `RAWSQL_*` calculated fields, each with the connection it targets |
 
 All tools take a `path` to a local `.twbx` or `.twb` file. Field names are case-insensitive and brackets are optional: `Profit Ratio` and `[profit ratio]` both resolve.
 

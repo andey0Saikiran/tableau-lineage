@@ -2,7 +2,9 @@ import { useCallback, useState } from 'react';
 import { extractFromTwbx, TableauExtractionError } from '../lib/extractor';
 import type { ExtractResult } from '../lib/types';
 
-const MAX_BYTES = 100 * 1024 * 1024; // 100 MB, enforced client-side
+// 500 MB: safe because only the .twb XML inside is ever decompressed — the
+// bundled data extract (what makes big .twbx files big) is skipped entirely.
+const MAX_BYTES = 500 * 1024 * 1024;
 
 type Status = 'idle' | 'parsing' | 'done' | 'error';
 

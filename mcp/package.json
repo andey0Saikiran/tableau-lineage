@@ -1,6 +1,6 @@
 {
   "name": "tableau-lineage-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "MCP server that lets AI assistants read the lineage inside Tableau workbooks (.twbx/.twb): calculated-field dependencies, formulas, parameters. Runs 100% locally; the workbook never leaves your machine.",
   "type": "module",
   "license": "MIT",
