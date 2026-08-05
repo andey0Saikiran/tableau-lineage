@@ -29,8 +29,9 @@ export function AboutPanel({ open, onClose, t }: PanelProps) {
       <div className="space-y-7 text-[15px] leading-relaxed text-ink">
         <p className="text-muted">
           Drop in a Tableau workbook and this tool maps every calculated field, its formula, and what
-          it depends on — raw fields, parameters, LOD and table calculations — as an interactive
-          dependency graph and a searchable data dictionary.
+          it depends on (raw fields, parameters, LOD and table calculations) as an interactive
+          dependency graph and a searchable data dictionary. Any SQL the workbook stores, Custom SQL
+          queries, Initial SQL, stored procedures, and RAWSQL fields, is surfaced alongside.
         </p>
 
         <section>

@@ -29,6 +29,10 @@ const FAQS = [
     a: 'It is completely free and open source. Tableau Catalog is a strong option for organization-wide lineage if you have Data Management licensed and your content is published to Tableau Server or Cloud. This tool covers a narrower job: calculated-field and parameter lineage for a single .twbx file on your own machine, with nothing uploaded.',
   },
   {
+    q: 'Can it show the SQL a Tableau workbook runs?',
+    a: 'Yes. If the workbook contains stored SQL, a SQL section appears with every Custom SQL query, Initial SQL statement, stored procedure reference, and RAWSQL calculated field, each mapped to the database connection it targets. Note that Tableau does not save the queries it generates at runtime for live connections inside the file, so those cannot be shown.',
+  },
+  {
     q: 'Can my AI assistant (Claude, Cursor) read Tableau workbooks with this?',
     a: (
       <>
@@ -66,7 +70,7 @@ export function SeoContent() {
         <p className="mt-3 max-w-2xl text-pretty text-[15px] leading-relaxed text-muted">
           Inheriting a Tableau dashboard usually means an afternoon of double-clicking fields to work out
           where a number comes from. Tableau Lineage Visualizer reads the calculated-field dependencies,
-          parameters, and metadata inside any{' '}
+          parameters, stored SQL, and metadata inside any{' '}
           <code className="rounded bg-slate-100 px-1.5 py-0.5 text-sm text-ink">.twbx</code> and lays them
           out as an interactive lineage graph and a searchable data dictionary, all in your browser, with
           nothing uploaded.

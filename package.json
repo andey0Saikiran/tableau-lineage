@@ -2,7 +2,7 @@
   "name": "tableau-lineage",
   "private": true,
   "version": "1.0.0",
-  "description": "Privacy-first, fully client-side visualizer for Tableau workbook (.twbx) field lineage, calculated-field dependencies, and metadata.",
+  "description": "Privacy-first, fully client-side visualizer for Tableau workbook (.twbx) field lineage, calculated-field dependencies, stored SQL, and metadata.",
   "type": "module",
   "license": "MIT",
   "homepage": "https://tableau-lineage.com",

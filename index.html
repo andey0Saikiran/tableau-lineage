@@ -9,7 +9,7 @@
     <title>Tableau Lineage Visualizer: .twbx calculated-field dependencies, in your browser</title>
     <meta
       name="description"
-      content="Free, open-source tool to map the field-level lineage, calculated-field dependencies, parameters, and metadata inside any Tableau .twbx workbook. Runs entirely in your browser, nothing is uploaded."
+      content="Free, open-source tool to map the field-level lineage, calculated-field dependencies, parameters, stored SQL (Custom SQL, Initial SQL, stored procedures), and metadata inside any Tableau .twbx workbook. Runs entirely in your browser, nothing is uploaded."
     />
     <link rel="canonical" href="https://tableau-lineage.com/" />
 
@@ -19,7 +19,7 @@
     <meta property="og:title" content="Tableau Lineage Visualizer" />
     <meta
       property="og:description"
-      content="Map calculated-field dependencies and metadata inside any Tableau .twbx, 100% in your browser. No upload, no tracking."
+      content="Map calculated-field dependencies, stored SQL, and metadata inside any Tableau .twbx, 100% in your browser. No upload, no tracking."
     />
     <meta property="og:url" content="https://tableau-lineage.com/" />
     <meta property="og:image" content="https://tableau-lineage.com/og.jpg" />
@@ -30,7 +30,7 @@
     <meta name="twitter:title" content="Tableau Lineage Visualizer" />
     <meta
       name="twitter:description"
-      content="Map calculated-field dependencies and metadata inside any Tableau .twbx, 100% in your browser."
+      content="Map calculated-field dependencies, stored SQL, and metadata inside any Tableau .twbx, 100% in your browser."
     />
     <meta name="twitter:image" content="https://tableau-lineage.com/og.jpg" />
 
@@ -50,7 +50,7 @@
         "applicationCategory": "BusinessApplication",
         "operatingSystem": "Any (web browser)",
         "browserRequirements": "Requires a modern web browser. No installation.",
-        "description": "A privacy-first web app that visualizes the field-level lineage, calculated-field dependencies, and metadata inside any Tableau workbook (.twbx), entirely in your browser. Nothing is uploaded.",
+        "description": "A privacy-first web app that visualizes the field-level lineage, calculated-field dependencies, stored SQL (Custom SQL, Initial SQL, stored procedures), and metadata inside any Tableau workbook (.twbx), entirely in your browser. Nothing is uploaded.",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
         "isAccessibleForFree": true,
         "creator": {
@@ -105,6 +105,14 @@
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "Every field becomes a node: raw fields, calculated fields, parameters, level-of-detail (LOD) expressions, and table calculations, with edges showing what depends on what. Click a category to highlight just those nodes, or open the searchable dictionary to read each formula."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can it show the SQL a Tableau workbook runs?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. If the workbook contains stored SQL, a SQL section appears with every Custom SQL query, Initial SQL statement, stored procedure reference, and RAWSQL calculated field, each mapped to the database connection it targets. Note that Tableau does not save the queries it generates at runtime for live connections inside the file, so those cannot be shown."
             }
           },
           {

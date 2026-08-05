@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Terminal, X } from 'lucide-react';
 
-const DISMISS_KEY = 'tl-mcp-banner-dismissed';
+const DISMISS_KEY = 'tl-sql-banner-dismissed';
 const MCP_DOCS_URL = 'https://github.com/andey0Saikiran/tableau-lineage/tree/main/mcp';
 
 export function AnnouncementBar() {
@@ -34,16 +34,11 @@ export function AnnouncementBar() {
         <Terminal className="hidden h-3.5 w-3.5 flex-shrink-0 opacity-90 sm:block" aria-hidden />
         <p className="min-w-0">
           <span className="font-bold">New:</span>{' '}
-          <span className="sm:hidden">use it from Claude via MCP.</span>
+          <span className="sm:hidden">now shows the SQL inside your workbook.</span>
           <span className="hidden sm:inline">
-            your AI assistant can read Tableau workbooks too
-            <span className="hidden md:inline">
-              , with{' '}
-              <code className="rounded bg-white/15 px-1.5 py-0.5 font-mono text-[12px]">
-                tableau-lineage-mcp
-              </code>
-            </span>
-            .<span className="hidden lg:inline"> Still 100% local.</span>
+            it now surfaces your workbook&apos;s SQL
+            <span className="hidden md:inline">: Custom SQL, Initial SQL, stored procedures, RAWSQL</span>
+            .<span className="hidden lg:inline"> On the page and in the MCP.</span>
           </span>{' '}
           <a
             href={MCP_DOCS_URL}
@@ -51,7 +46,7 @@ export function AnnouncementBar() {
             rel="noopener noreferrer"
             className="whitespace-nowrap font-semibold underline decoration-white/50 underline-offset-2 transition-colors hover:decoration-white"
           >
-            Set it up →
+            Learn more →
           </a>
         </p>
       </div>

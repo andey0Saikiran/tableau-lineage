@@ -14,7 +14,8 @@ data dictionary. Nothing is uploaded, stored, or sent anywhere.
 Inheriting or auditing someone else's Tableau workbook means reverse-engineering dozens
 of calculated fields and their tangled dependencies by hand. This tool reads the
 workbook's structure and maps it for you: every calculated field, its formula, the raw
-fields and parameters it depends on, and which calcs are LOD or table calculations.
+fields and parameters it depends on, which calcs are LOD or table calculations, and any
+SQL the workbook stores (Custom SQL, Initial SQL, stored procedures, RAWSQL fields).
 
 Because Tableau workbooks often contain sensitive data, the whole thing runs locally;
 the `.twbx` never leaves your machine.
@@ -26,6 +27,11 @@ the `.twbx` never leaves your machine.
   search, highlight dependency chains, zoom and pan.
 - **Searchable data dictionary**: every calculated field grouped by data source, with
   its formula and dependencies; every parameter with its type, current value, and options.
+- **Stored SQL, surfaced**: when a workbook contains SQL, a panel shows every Custom SQL
+  query (full text), Initial SQL statement, stored-procedure reference with parameters,
+  and `RAWSQL_*` calculated field, each mapped to the connection (class · dbname · server)
+  it targets. Runtime-generated live-connection queries are not stored in files, so they
+  are explicitly out of scope.
 - **Six metrics at a glance**: data sources, calculated fields, raw fields, parameters,
   LOD calcs, table calcs.
 - **Exports**, all generated in-browser:
