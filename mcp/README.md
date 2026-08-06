@@ -59,6 +59,7 @@ Requires Node.js 18+.
 | `get_lineage_graph` | The complete dependency graph as nodes + edges JSON |
 | `list_sql_queries` | Every SQL statement stored in the workbook: Custom SQL (full query text), Initial SQL, stored-procedure references with parameters, and `RAWSQL_*` calculated fields, each with the connection it targets |
 | `list_filters` | Every filter, deduplicated across worksheets: the field it acts on, kind (categorical / quantitative / relative-date), context-filter status, member selections and ranges, plus a `by_worksheet` breakdown |
+| `list_worksheets` | Every worksheet with the fields it uses (caption-resolved) and the filters it applies — the per-sheet view of the workbook |
 
 All tools take a `path` to a local `.twbx` or `.twb` file. Field names are case-insensitive and brackets are optional: `Profit Ratio` and `[profit ratio]` both resolve.
 

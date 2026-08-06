@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { ChevronDown, Filter, Layers, Database } from 'lucide-react';
 import type { FilterExtractResult, WorkbookFilter } from '../lib/filterExtractor';
 
@@ -21,6 +22,40 @@ function KindBadge({ kind }: { kind: string }) {
   );
 }
 
+/**
+ * Member values: up to 10 are shown in full; above that, only the first 5 are
+ * shown with a "Show all N" toggle so a 200-value filter can't flood the panel.
+ */
+function MemberValues({ members }: { members: string[] }) {
+  const [expanded, setExpanded] = useState(false);
+  if (members.length === 0) return null;
+  const truncate = members.length > 10 && !expanded;
+  const shown = truncate ? members.slice(0, 5) : members;
+  return (
+    <span className="text-xs text-muted">
+      = {shown.join(', ')}
+      {truncate && (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="ml-1.5 rounded-full bg-cyan-50 px-2 py-0.5 font-semibold text-cyan-700 transition-colors hover:bg-cyan-100"
+        >
+          Show all {members.length} values
+        </button>
+      )}
+      {expanded && members.length > 10 && (
+        <button
+          type="button"
+          onClick={() => setExpanded(false)}
+          className="ml-1.5 rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-muted transition-colors hover:bg-slate-200"
+        >
+          Show less
+        </button>
+      )}
+    </span>
+  );
+}
+
 function FilterRow({ f, showWorksheets }: { f: WorkbookFilter; showWorksheets: boolean }) {
   return (
     <div className="flex flex-wrap items-center gap-2 py-1.5">
@@ -31,12 +66,7 @@ function FilterRow({ f, showWorksheets }: { f: WorkbookFilter; showWorksheets: b
           context
         </span>
       )}
-      {f.members.length > 0 && (
-        <span className="text-xs text-muted">
-          = {f.members.slice(0, 6).join(', ')}
-          {f.members.length > 6 && ` +${f.members.length - 6} more`}
-        </span>
-      )}
+      <MemberValues members={f.members} />
       {f.range && (f.range.min || f.range.max) && (
         <span className="text-xs text-muted">
           range {f.range.min ?? '…'} – {f.range.max ?? '…'}

@@ -34,6 +34,7 @@ export function downloadJson(result: ExtractResult): void {
     parameters: result.parameters,
     raw_fields: result.rawFields,
     calculated_fields: result.fields,
+    worksheets: result.worksheets ?? [],
   };
   triggerDownload(
     new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' }),
@@ -43,7 +44,15 @@ export function downloadJson(result: ExtractResult): void {
 
 export function downloadCsv(result: ExtractResult): void {
   const esc = (v: string) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
-  const headers = ['Data Source', 'Field Name', 'Type', 'Formula', 'Field Dependencies', 'Parameter Dependencies'];
+  const fieldSheets = new Map<string, string[]>();
+  for (const ws of result.worksheets ?? []) {
+    for (const f of ws.fields) {
+      const list = fieldSheets.get(f) ?? [];
+      list.push(ws.name);
+      fieldSheets.set(f, list);
+    }
+  }
+  const headers = ['Data Source', 'Field Name', 'Type', 'Formula', 'Field Dependencies', 'Parameter Dependencies', 'Used In Worksheets'];
   const rows = result.fields.map((f) =>
     [
       esc(f.datasource),
@@ -52,6 +61,7 @@ export function downloadCsv(result: ExtractResult): void {
       esc(f.formula),
       esc(f.ingredients.join(', ')),
       esc(f.parameter_dependencies.join(', ')),
+      esc((fieldSheets.get(f.field_name) ?? []).join(', ')),
     ].join(','),
   );
   const csv = '﻿' + [headers.join(','), ...rows].join('\r\n'); // BOM for Excel

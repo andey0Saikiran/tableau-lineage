@@ -107,6 +107,7 @@
         .legend-shape.calc { width: 18px; height: 14px; background: #E3F2FD; border: 2px solid #0078d4; border-radius: 3px; }
         .legend-shape.raw { width: 14px; height: 14px; background: #dcfce7; border: 2px solid #10b981; border-radius: 50%; }
         .legend-shape.parameter { width: 14px; height: 14px; background: #fce7f3; border: 2px solid #ec4899; transform: rotate(45deg); }
+        .legend-shape.worksheet { width: 15px; height: 14px; background: #ccfbf1; border: 2px solid #0d9488; clip-path: polygon(25% 0, 75% 0, 100% 50%, 75% 100%, 25% 100%, 0 50%); }
         .legend-shape.cluster { width: 16px; height: 16px; background: #ede9fe; border: 2px solid #8b5cf6; border-radius: 50%; }
         .legend-shape.selected { width: 14px; height: 14px; background: #fee2e2; border: 3px solid #ef4444; border-radius: 50%; }
         .legend-shape.connected { width: 14px; height: 14px; background: #fef3c7; border: 2px solid #f59e0b; border-radius: 50%; }
@@ -240,6 +241,7 @@
                     <button class="action-btn" type="button" onclick="toggleClusters()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg> Clusters</button>
                     <button class="action-btn" type="button" onclick="fitGraph()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3"/></svg> Fit</button>
                     <button class="action-btn primary" type="button" onclick="togglePhysics()"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z"/></svg> Physics</button>
+                    <button class="action-btn" type="button" id="sheetsBtn" onclick="toggleWorksheets()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="m2 13 10 5 10-5"/></svg> Sheets</button>
                     <button class="action-btn success" type="button" onclick="exportCSV()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12m0 0-4-4m4 4 4-4M5 21h14"/></svg> CSV</button>
                 </div>
             </div>
@@ -251,6 +253,7 @@
                 <div class="legend-item"><div class="legend-shape calc"></div><span>Calculated Field</span></div>
                 <div class="legend-item"><div class="legend-shape raw"></div><span>Raw Field</span></div>
                 <div class="legend-item"><div class="legend-shape parameter"></div><span>Parameter</span></div>
+                <div class="legend-item"><div class="legend-shape worksheet"></div><span>Worksheet</span></div>
                 <div class="legend-item"><div class="legend-shape cluster"></div><span>Data Source</span></div>
                 <div class="legend-item"><div class="legend-shape selected"></div><span>Selected</span></div>
                 <div class="legend-item"><div class="legend-shape connected"></div><span>Connected</span></div>
@@ -294,6 +297,7 @@
                     <div class="stat-card"><div class="stat-value">__PARAM_COUNT__</div><div class="stat-label">Parameters</div></div>
                     <div class="stat-card"><div class="stat-value">__LOD_COUNT__</div><div class="stat-label">LOD</div></div>
                     <div class="stat-card"><div class="stat-value">__TABLECALC_COUNT__</div><div class="stat-label">Table Calcs</div></div>
+                    <div class="stat-card"><div class="stat-value">__WS_COUNT__</div><div class="stat-label">Worksheets</div></div>
                 </div>
                 <div id="dictContent"></div>
             </div>
@@ -308,6 +312,8 @@
     <script>
         const data = __JSON_DATA__;
         const parameters = __PARAMS_JSON__;
+        const worksheets = __WORKSHEETS_JSON__;
+        const WS_PREFIX = 'ws'; // node-id prefix so a sheet can share a field's name
 
         let network = null;
         let nodesDS = new vis.DataSet();
@@ -324,6 +330,7 @@
             cluster: { background: '#ede9fe', border: '#8b5cf6', highlight: { background: '#ddd6fe', border: '#8b5cf6' } },
             selected: { background: '#fee2e2', border: '#ef4444', highlight: { background: '#fecaca', border: '#ef4444' } },
             connected: { background: '#fef3c7', border: '#f59e0b', highlight: { background: '#fde68a', border: '#f59e0b' } },
+            worksheet: { background: '#ccfbf1', border: '#0d9488', highlight: { background: '#99f6e4', border: '#0d9488' } },
             dimmed: { background: '#f1f5f9', border: '#cbd5e1' }
         };
 
@@ -395,10 +402,36 @@
                 });
             });
 
+            // Worksheet integration: one hexagon per sheet, wired to the fields it
+            // uses (dashed) and the fields it filters on (solid cyan). Only fields
+            // already present in the lineage graph are linked, to avoid clutter.
+            worksheets.forEach(ws => {
+                const usable = (ws.fields || []).filter(f => added.has(f));
+                const filterFields = new Set((ws.filters || []).map(f => f.field));
+                const filterable = [...filterFields].filter(f => added.has(f));
+                if (usable.length === 0 && filterable.length === 0) return;
+                const wsId = WS_PREFIX + '::' + ws.name;
+                nodesDS.add({
+                    id: wsId, label: ws.name, group: 'worksheet', datasource: 'Worksheets',
+                    formula: null, ingredients: usable, paramDeps: [], fieldType: 'worksheet',
+                    isTableCalc: false, lodType: null, isParameter: false,
+                    wsFilters: ws.filters || [],
+                    title: ws.name + '\n(worksheet: ' + usable.length + ' fields, ' + (ws.filters || []).length + ' filters)'
+                });
+                usable.forEach(f => {
+                    if (filterFields.has(f)) return; // drawn as a filter edge below
+                    edgesDS.add({ from: f, to: wsId, arrows: 'to', dashes: [4, 4], color: { color: '#5eead4' }, wsEdge: true, title: 'used by ' + ws.name });
+                });
+                filterable.forEach(f => {
+                    edgesDS.add({ from: f, to: wsId, arrows: 'to', color: { color: '#06b6d4' }, width: 2, wsEdge: true, title: 'filters ' + ws.name });
+                });
+            });
+
             nodesDS.forEach(n => {
                 let nodeColor = colors.raw;
                 if (n.group === 'calc') nodeColor = colors.calc;
                 else if (n.group === 'parameter') nodeColor = colors.parameter;
+                else if (n.group === 'worksheet') nodeColor = colors.worksheet;
                 nodeStyles.set(n.id, { color: nodeColor, font: { color: '#334155', size: 12 } });
             });
 
@@ -407,7 +440,8 @@
                 groups: {
                     calc: { shape: 'box', color: colors.calc, margin: 10, borderWidth: 2 },
                     raw: { shape: 'dot', size: 16, color: colors.raw },
-                    parameter: { shape: 'diamond', size: 18, color: colors.parameter, borderWidth: 2 }
+                    parameter: { shape: 'diamond', size: 18, color: colors.parameter, borderWidth: 2 },
+                    worksheet: { shape: 'hexagon', size: 20, color: colors.worksheet, borderWidth: 2 }
                 },
                 edges: { smooth: { type: 'cubicBezier', roundness: 0.5 }, width: 1.5, color: { color: '#cbd5e1', hover: '#94a3b8', highlight: '#ef4444' }, arrows: { to: { scaleFactor: 0.8 } } },
                 physics: { enabled: true, stabilization: { enabled: true, iterations: 200, fit: true }, barnesHut: { gravitationalConstant: -3000, springLength: 120, springConstant: 0.04, damping: 0.3 } },
@@ -479,7 +513,8 @@
             document.getElementById('nodeName').textContent = node.label;
             document.getElementById('nodeSource').textContent = node.datasource || '-';
             let badgesHtml = '';
-            if (node.group === 'parameter' || node.isParameter) badgesHtml += '<span class="node-panel-badge parameter">Parameter</span>';
+            if (node.group === 'worksheet') badgesHtml += '<span class="node-panel-badge" style="background:#ccfbf1;color:#0f766e;">Worksheet</span>';
+            else if (node.group === 'parameter' || node.isParameter) badgesHtml += '<span class="node-panel-badge parameter">Parameter</span>';
             else if (node.group === 'calc') badgesHtml += '<span class="node-panel-badge calc">Calculated</span>';
             else badgesHtml += '<span class="node-panel-badge raw">Raw Field</span>';
             if (node.lodType) badgesHtml += '<span class="node-panel-badge lod">' + escHtml(node.lodType) + '</span>';
@@ -491,8 +526,18 @@
                 document.getElementById('paramValue').textContent = node.paramValue + (node.paramDatatype ? ' (' + node.paramDatatype + ')' : '');
             } else { paramValueSection.style.display = 'none'; }
             const formulaSection = document.getElementById('formulaSection');
-            if (node.formula) { formulaSection.style.display = 'block'; document.getElementById('nodeFormula').textContent = node.formula; }
-            else { formulaSection.style.display = 'none'; }
+            const formulaLabel = formulaSection.querySelector('.node-panel-label');
+            if (node.group === 'worksheet' && node.wsFilters && node.wsFilters.length) {
+                formulaSection.style.display = 'block';
+                formulaLabel.textContent = 'Filters applied';
+                document.getElementById('nodeFormula').textContent = node.wsFilters
+                    .map(f => f.field + '  (' + f.kind + (f.is_context ? ', context' : '') + ')')
+                    .join('\n');
+            } else if (node.formula) {
+                formulaSection.style.display = 'block';
+                formulaLabel.textContent = 'Formula';
+                document.getElementById('nodeFormula').textContent = node.formula;
+            } else { formulaSection.style.display = 'none'; formulaLabel.textContent = 'Formula'; }
             const depsSection = document.getElementById('depsSection');
             const allDeps = [...(node.ingredients || []), ...(node.paramDeps || [])];
             if (allDeps.length > 0) {
@@ -524,9 +569,10 @@
                     joinCondition: opt => opt.datasource === ds,
                     processProperties: (clusterOpt, childNodes) => {
                         const isParamCluster = ds === 'Parameters';
-                        clusterOpt.label = ds; clusterOpt.color = isParamCluster ? colors.parameter : colors.cluster;
+                        const isWsCluster = ds === 'Worksheets';
+                        clusterOpt.label = ds; clusterOpt.color = isParamCluster ? colors.parameter : (isWsCluster ? colors.worksheet : colors.cluster);
                         clusterOpt.shape = 'dot'; clusterOpt.size = 30 + Math.min(childNodes.length * 2, 40);
-                        clusterOpt.font = { size: 14, bold: true, color: isParamCluster ? '#be185d' : '#5b21b6' };
+                        clusterOpt.font = { size: 14, bold: true, color: isParamCluster ? '#be185d' : (isWsCluster ? '#0f766e' : '#5b21b6') };
                         clusterOpt.title = ds + '\n(' + childNodes.length + ' items)'; clusterOpt.borderWidth = 3;
                         return clusterOpt;
                     },
@@ -573,6 +619,21 @@
         function fitGraph() { network.fit({ animation: { duration: 400 } }); }
         function togglePhysics() { physicsOn = !physicsOn; network.setOptions({ physics: { enabled: physicsOn } }); toast(physicsOn ? 'Physics ON' : 'Physics OFF'); }
 
+        let worksheetsVisible = true;
+        function toggleWorksheets() {
+            worksheetsVisible = !worksheetsVisible;
+            const nu = [];
+            nodesDS.forEach(n => { if (n.group === 'worksheet') nu.push({ id: n.id, hidden: !worksheetsVisible }); });
+            nodesDS.update(nu);
+            const eu = [];
+            edgesDS.forEach(e => { if (e.wsEdge) eu.push({ id: e.id, hidden: !worksheetsVisible }); });
+            edgesDS.update(eu);
+            const btn = document.getElementById('sheetsBtn');
+            if (btn) btn.style.opacity = worksheetsVisible ? '1' : '0.55';
+            toast(worksheetsVisible ? 'Worksheets shown' : 'Worksheets hidden');
+            setTimeout(() => network.fit({ animation: true }), 100);
+        }
+
         function buildDict() {
             const container = document.getElementById('dictContent');
             let html = '';
@@ -581,6 +642,26 @@
                 parameters.forEach(param => {
                     const allowedVals = param.allowed_values ? param.allowed_values.map(v => v.alias || v.value).join(', ') : 'Any';
                     html += '<div class="param-card" data-name="' + escAttr(param.name.toLowerCase()) + '"><div class="param-info"><div class="param-name">' + PARAM_ICON + ' ' + escHtml(param.name) + '</div><div class="param-value">Type: ' + escHtml(param.datatype) + ' | Current: ' + escHtml(param.value) + ' | Options: ' + escHtml(allowedVals) + '</div></div><button type="button" class="field-btn" data-node="' + escAttr(param.name) + '" onclick="viewInGraph(this.dataset.node)">Graph</button></div>';
+                });
+                html += '</div></details>';
+            }
+            if (worksheets.length > 0) {
+                const WS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M12 3 2 8l10 5 10-5-10-5z"/><path d="m2 13 10 5 10-5"/></svg>';
+                html += '<details class="ds-accordion" data-ds="worksheets" open><summary class="ds-header"><div class="ds-info"><div class="ds-icon" style="background:linear-gradient(135deg,#0d9488,#2dd4bf);">' + WS_ICON + '</div><span class="ds-name">Worksheets</span></div><div class="ds-meta"><span class="ds-count">' + worksheets.length + ' worksheets</span><span class="ds-chevron">▶</span></div></summary><div class="field-list">';
+                worksheets.forEach(ws => {
+                    html += '<div class="field-card" data-name="' + escAttr(ws.name.toLowerCase()) + '"><div class="field-header"><div class="field-name" style="color:#0f766e;">' + escHtml(ws.name) + '</div><div class="field-actions"><button type="button" class="field-btn" data-node="' + escAttr(WS_PREFIX + '::' + ws.name) + '" onclick="viewWsInGraph(this.dataset.node)">Graph</button></div></div>';
+                    if ((ws.filters || []).length > 0) {
+                        html += '<div class="field-deps" style="margin-bottom:8px;"><span class="field-deps-label">Filters:</span>' + ws.filters.map(f =>
+                            '<span class="dep-tag" style="background:#cffafe;color:#155e75;cursor:default;">' + escHtml(f.field) + ' · ' + escHtml(f.kind) + (f.is_context ? ' · context' : '') + '</span>'
+                        ).join('') + '</div>';
+                    }
+                    if ((ws.fields || []).length > 0) {
+                        html += '<div class="field-deps"><span class="field-deps-label">Uses:</span>' + ws.fields.map(dep => {
+                            const isParam = parameterNames.has(dep);
+                            return '<button type="button" class="dep-tag' + (isParam ? ' param' : '') + '" data-node="' + escAttr(dep) + '" onclick="viewInGraph(this.dataset.node)">' + escHtml(dep) + '</button>';
+                        }).join('') + '</div>';
+                    }
+                    html += '</div>';
                 });
                 html += '</div></details>';
             }
@@ -631,6 +712,16 @@
             }, 100);
         }
 
+        function viewWsInGraph(nodeId) {
+            switchView('graph', document.getElementById('tab-graph'));
+            setTimeout(() => {
+                if (!worksheetsVisible) toggleWorksheets();
+                const clusterId = 'cluster_Worksheets';
+                if (network.body.nodes[clusterId]) { network.openCluster(clusterId); clustered = false; }
+                setTimeout(() => { highlightNode(nodeId); showPanel(nodeId); }, 150);
+            }, 100);
+        }
+
         function switchView(view, btn) {
             document.querySelectorAll('.view-panel').forEach(el => el.classList.remove('active'));
             document.getElementById(view + 'View').classList.add('active');
@@ -640,14 +731,17 @@
         }
 
         function exportCSV() {
-            const headers = ['Data Source', 'Field Name', 'Type', 'Formula', 'Field Dependencies', 'Parameter Dependencies'];
+            const fieldSheets = {};
+            worksheets.forEach(ws => (ws.fields || []).forEach(f => { (fieldSheets[f] = fieldSheets[f] || []).push(ws.name); }));
+            const headers = ['Data Source', 'Field Name', 'Type', 'Formula', 'Field Dependencies', 'Parameter Dependencies', 'Used In Worksheets'];
             const rows = data.map(item => [
                 '"' + (item.datasource || '').replace(/"/g, '""') + '"',
                 '"' + (item.field_name || '').replace(/"/g, '""') + '"',
                 '"' + (item.field_type || '').replace(/"/g, '""') + '"',
                 '"' + (item.formula || '').replace(/"/g, '""') + '"',
                 '"' + (item.ingredients || []).join(', ') + '"',
-                '"' + (item.parameter_dependencies || []).join(', ') + '"'
+                '"' + (item.parameter_dependencies || []).join(', ') + '"',
+                '"' + (fieldSheets[item.field_name] || []).join(', ').replace(/"/g, '""') + '"'
             ]);
             const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
             downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), 'tableau_lineage.csv');

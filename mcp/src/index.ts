@@ -16,8 +16,13 @@ import { DOMParser } from '@xmldom/xmldom';
 import { extractFromTwbx, extractFromXml, TableauExtractionError } from '../../src/lib/extractor';
 import { extractSqlFromTwbx, extractSqlFromXml } from '../../src/lib/sqlExtractor';
 import type { SqlExtractResult } from '../../src/lib/sqlExtractor';
-import { extractFiltersFromTwbx, extractFiltersFromXml } from '../../src/lib/filterExtractor';
-import type { FilterExtractResult } from '../../src/lib/filterExtractor';
+import {
+  extractFiltersFromTwbx,
+  extractFiltersFromXml,
+  extractWorksheetsFromTwbx,
+  extractWorksheetsFromXml,
+} from '../../src/lib/filterExtractor';
+import type { FilterExtractResult, WorksheetUsage } from '../../src/lib/filterExtractor';
 import type { CalculatedField, ExtractResult } from '../../src/lib/types';
 
 const VERSION = '0.3.0';
@@ -99,6 +104,32 @@ function loadFilters(inputPath: string): FilterExtractResult {
     throw new Error(`Unsupported file type (expected .twbx or .twb): ${abs}`);
   }
   filterCache.set(abs, { mtimeMs: st.mtimeMs, size: st.size, result });
+  return result;
+}
+
+const wsCache = new Map<string, { mtimeMs: number; size: number; result: WorksheetUsage[] }>();
+
+function loadWorksheets(inputPath: string): WorksheetUsage[] {
+  const abs = path.resolve(inputPath);
+  if (!fs.existsSync(abs)) {
+    throw new Error(`File not found: ${abs}`);
+  }
+  const st = fs.statSync(abs);
+  const hit = wsCache.get(abs);
+  if (hit && hit.mtimeMs === st.mtimeMs && hit.size === st.size) return hit.result;
+
+  const lower = abs.toLowerCase();
+  let result: WorksheetUsage[];
+  if (lower.endsWith('.twb')) {
+    result = extractWorksheetsFromXml(fs.readFileSync(abs, 'utf8'), path.basename(abs).replace(/\.twb$/i, ''));
+  } else if (lower.endsWith('.twbx')) {
+    const buf = fs.readFileSync(abs);
+    const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+    result = extractWorksheetsFromTwbx(ab, path.basename(abs));
+  } else {
+    throw new Error(`Unsupported file type (expected .twbx or .twb): ${abs}`);
+  }
+  wsCache.set(abs, { mtimeMs: st.mtimeMs, size: st.size, result });
   return result;
 }
 
@@ -481,6 +512,28 @@ server.registerTool(
         filters: r.filters,
         by_worksheet: byWorksheet,
         note: r.count === 0 ? 'No filters found in this workbook.' : undefined,
+      });
+    } catch (e) {
+      return fail(e);
+    }
+  },
+);
+
+server.registerTool(
+  'list_worksheets',
+  {
+    title: 'List worksheets with their fields and filters',
+    description:
+      'Every worksheet in the workbook with the fields it uses (caption-resolved, from its datasource dependencies) and the filters it applies (field, kind, context status). The per-sheet view of the workbook: use it to answer "what does this sheet depend on?" or "where is this field actually displayed?".',
+    inputSchema: { path: pathArg },
+  },
+  async ({ path: p }) => {
+    try {
+      const ws = loadWorksheets(p);
+      return ok({
+        count: ws.length,
+        worksheets: ws,
+        note: ws.length === 0 ? 'No worksheets found in this workbook.' : undefined,
       });
     } catch (e) {
       return fail(e);

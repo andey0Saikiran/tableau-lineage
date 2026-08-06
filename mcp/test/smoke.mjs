@@ -65,8 +65,8 @@ try {
   const tools = await rpc('tools/list', {});
   const names = tools.tools.map((t) => t.name).sort();
   check(
-    'exposes all 8 tools',
-    ['analyze_workbook', 'get_field', 'get_lineage_graph', 'list_calculated_fields', 'list_filters', 'list_parameters', 'list_sql_queries', 'trace_dependencies']
+    'exposes all 9 tools',
+    ['analyze_workbook', 'get_field', 'get_lineage_graph', 'list_calculated_fields', 'list_filters', 'list_parameters', 'list_sql_queries', 'list_worksheets', 'trace_dependencies']
       .every((n) => names.includes(n)),
     names.join(', '),
   );
@@ -129,6 +129,17 @@ try {
     && flt.by_worksheet.Trends.length === 2, JSON.stringify(flt.by_worksheet?.Trends));
   const demoFlt = jsonOf(await rpc('tools/call', { name: 'list_filters', arguments: { path: demoTwbx } }));
   check('demo workbook filters found (real-world shape)', demoFlt.count === 6, demoFlt.fields_used?.join(', '));
+
+  // ── Worksheets ──────────────────────────────────────────────────────────────
+  const ws = jsonOf(await rpc('tools/call', { name: 'list_worksheets', arguments: { path: sqlFixture } }));
+  check('finds both worksheets', ws.count === 2, ws.worksheets?.map((w) => w.name).join(', '));
+  const overview = ws.worksheets?.find((w) => w.name === 'Overview');
+  check('worksheet lists its fields', overview?.fields?.includes('Amount'), JSON.stringify(overview?.fields));
+  check('worksheet lists its filters', overview?.filters?.length === 2
+    && overview.filters.some((f) => f.field === 'Region' && f.is_context === true));
+  const demoWs = jsonOf(await rpc('tools/call', { name: 'list_worksheets', arguments: { path: demoTwbx } }));
+  check('demo workbook has 12 worksheets (real-world shape)', demoWs.count === 12,
+    `${demoWs.count} sheets, first: ${demoWs.worksheets?.[0]?.name}`);
 
   const missing = await rpc('tools/call', { name: 'get_field', arguments: { path: demoTwbx, field: 'No Such Field Xyz' } });
   check('unknown field returns a clean error', missing.isError === true, textOf(missing).slice(0, 60));

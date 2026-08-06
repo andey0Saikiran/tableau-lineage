@@ -42,14 +42,16 @@ export function buildReportHtml(result: ExtractResult): string {
     __FILE_LABEL__: htmlEscape(fileLabel),
     __JSON_DATA__: jsonForScript(result.fields),
     __PARAMS_JSON__: jsonForScript(result.parameters),
+    __WORKSHEETS_JSON__: jsonForScript(result.worksheets ?? []),
     __DS_COUNT__: String(result.stats.datasources),
     __CALC_COUNT__: String(result.stats.calculated_fields),
     __RAW_COUNT__: String(result.stats.raw_fields),
     __PARAM_COUNT__: String(result.stats.parameters),
     __LOD_COUNT__: String(result.stats.lod_fields),
     __TABLECALC_COUNT__: String(result.stats.table_calcs),
+    __WS_COUNT__: String((result.worksheets ?? []).length),
   };
   const re =
-    /\/\*__VIS_NETWORK__\*\/|__FILE_LABEL__|__JSON_DATA__|__PARAMS_JSON__|__DS_COUNT__|__CALC_COUNT__|__RAW_COUNT__|__PARAM_COUNT__|__LOD_COUNT__|__TABLECALC_COUNT__/g;
+    /\/\*__VIS_NETWORK__\*\/|__FILE_LABEL__|__JSON_DATA__|__PARAMS_JSON__|__WORKSHEETS_JSON__|__DS_COUNT__|__CALC_COUNT__|__RAW_COUNT__|__PARAM_COUNT__|__LOD_COUNT__|__TABLECALC_COUNT__|__WS_COUNT__/g;
   return templateHtml.replace(re, (m) => tokens[m] ?? m);
 }

@@ -38,6 +38,10 @@ the `.twbx` never leaves your machine.
   on, its kind (categorical / quantitative / relative-date), context-filter status,
   stored member selections and ranges, plus a per-worksheet breakdown showing exactly
   which sheets filter on what. Data-source filters are called out separately.
+- **Worksheets in the lineage**: each sheet appears in the graph as a hexagon wired to
+  the fields it uses (dashed) and filters on (cyan), toggleable via the Sheets button;
+  the dictionary gains a Worksheets section, and the CSV/JSON exports carry a
+  "used in worksheets" mapping per field.
 - **Exports**, all generated in-browser:
   - **Interactive HTML**: a self-contained, watermarked report (vis-network inlined, so
     it works offline). The same artifact you see in the app.
@@ -93,7 +97,8 @@ claude mcp add tableau-lineage -- npx -y tableau-lineage-mcp
 Tools: `analyze_workbook`, `list_calculated_fields`, `get_field`, `trace_dependencies`,
 `list_parameters`, `get_lineage_graph`, `list_sql_queries` (Custom SQL, Initial SQL,
 stored procs, `RAWSQL_*`), `list_filters` (per-worksheet breakdown, context filters,
-members and ranges). Full docs in [`mcp/`](mcp/).
+members and ranges), `list_worksheets` (each sheet's fields and filters). Full docs
+in [`mcp/`](mcp/).
 
 ## Run locally
 

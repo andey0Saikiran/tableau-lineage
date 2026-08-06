@@ -34,7 +34,10 @@ export interface FilterExtractResult {
   fileLabel: string;
 }
 
-const MAX_MEMBERS = 12;
+// Capture up to 500 selected members so the UI can offer a full "show all"
+// view; the interface truncates the DISPLAY (first 5 when a filter has >10),
+// not the data.
+const MAX_MEMBERS = 500;
 
 /** `none:age:qk` → `age`; plain tokens pass through. */
 function unwrapFieldToken(token: string): string {
@@ -104,17 +107,24 @@ function filterLocation(el: Element): string | null {
   return null;
 }
 
-export function extractFiltersFromXml(
-  xmlString: string,
-  fileLabel = 'Tableau Workbook',
-): FilterExtractResult {
+function parseRoot(xmlString: string): Element {
   const doc = new DOMParser().parseFromString(xmlString, 'application/xml');
   if (doc.getElementsByTagName('parsererror').length > 0) {
     throw new TableauExtractionError('Could not parse the workbook XML (.twb).');
   }
   const root = doc.documentElement;
   if (!root) throw new TableauExtractionError('Empty or invalid workbook XML.');
+  return root;
+}
 
+export function extractFiltersFromXml(
+  xmlString: string,
+  fileLabel = 'Tableau Workbook',
+): FilterExtractResult {
+  return extractFiltersFromRoot(parseRoot(xmlString), fileLabel);
+}
+
+function extractFiltersFromRoot(root: Element, fileLabel: string): FilterExtractResult {
   const dsInfo = buildDatasourceInfo(root);
   const merged = new Map<string, WorkbookFilter>();
 
@@ -187,6 +197,84 @@ export function extractFiltersFromXml(
   );
   const fieldsUsed = [...new Set(filtersOut.map((x) => x.field))].sort();
   return { filters: filtersOut, fields_used: fieldsUsed, count: filtersOut.length, fileLabel };
+}
+
+// ── Worksheet usage ────────────────────────────────────────────────────────────
+
+export interface WorksheetUsage {
+  name: string;
+  /** Caption-resolved fields the worksheet uses (from datasource-dependencies). */
+  fields: string[];
+  /** Filters this worksheet applies. */
+  filters: { field: string; kind: string; is_context: boolean }[];
+}
+
+export function extractWorksheetsFromXml(
+  xmlString: string,
+  fileLabel = 'Tableau Workbook',
+): WorksheetUsage[] {
+  const root = parseRoot(xmlString);
+  const dsInfo = buildDatasourceInfo(root);
+  const filterResult = extractFiltersFromRoot(root, fileLabel);
+
+  const out: WorksheetUsage[] = [];
+  const worksheets = root.getElementsByTagName('worksheet');
+  for (let i = 0; i < worksheets.length; i++) {
+    const ws = worksheets[i];
+    const name = ws.getAttribute('name') || `Worksheet ${i + 1}`;
+    const fields = new Set<string>();
+
+    const depBlocks = ws.getElementsByTagName('datasource-dependencies');
+    for (let d = 0; d < depBlocks.length; d++) {
+      const block = depBlocks[d];
+      const captions = dsInfo.get(block.getAttribute('datasource') || '')?.captions;
+      const resolve = (internal: string | null) => {
+        if (!internal) return;
+        const clean = `[${unwrapFieldToken(stripBrackets(internal))}]`;
+        fields.add(captions?.get(clean) ?? stripBrackets(clean));
+      };
+      const cols = block.getElementsByTagName('column');
+      for (let c = 0; c < cols.length; c++) {
+        resolve(cols[c].getAttribute('caption') ? `[${cols[c].getAttribute('caption')}]` : cols[c].getAttribute('name'));
+      }
+      const instances = block.getElementsByTagName('column-instance');
+      for (let c = 0; c < instances.length; c++) resolve(instances[c].getAttribute('column'));
+    }
+
+    const filters = filterResult.filters
+      .filter((f) => f.worksheets.includes(name))
+      .map((f) => ({ field: f.field, kind: f.kind, is_context: f.is_context }));
+
+    out.push({ name, fields: [...fields].sort(), filters });
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export function extractWorksheetsFromTwbx(
+  buffer: ArrayBuffer,
+  filename = 'workbook.twbx',
+): WorksheetUsage[] {
+  return extractWorksheetsFromXml(
+    readTwbXml(buffer),
+    filename.replace(/\.twbx$/i, ''),
+  );
+}
+
+function readTwbXml(buffer: ArrayBuffer): string {
+  const bytes = new Uint8Array(buffer);
+  let entries: Record<string, Uint8Array>;
+  try {
+    entries = unzipSync(bytes, { filter: (file) => file.name.toLowerCase().endsWith('.twb') });
+  } catch {
+    throw new TableauExtractionError('This file is not a valid .twbx archive.');
+  }
+  const twbName = Object.keys(entries)[0];
+  if (!twbName) throw new TableauExtractionError('No .twb workbook was found inside the .twbx archive.');
+  const twbBytes = entries[twbName];
+  if (twbBytes.length > MAX_TWB_BYTES) {
+    throw new TableauExtractionError('This workbook is unusually large to parse. Try a smaller .twbx.');
+  }
+  return new TextDecoder('utf-8').decode(twbBytes);
 }
 
 const MAX_TWB_BYTES = 250 * 1024 * 1024;

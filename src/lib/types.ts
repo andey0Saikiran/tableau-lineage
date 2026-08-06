@@ -34,6 +34,19 @@ export interface LineageStats {
   total_fields: number;
 }
 
+export interface WorksheetFilterRef {
+  field: string;
+  kind: string;
+  is_context: boolean;
+}
+
+/** Per-worksheet usage: which fields a sheet uses and which filters it applies. */
+export interface WorksheetUsage {
+  name: string;
+  fields: string[];
+  filters: WorksheetFilterRef[];
+}
+
 export interface ExtractResult {
   fields: CalculatedField[];
   parameters: Parameter[];
@@ -41,4 +54,6 @@ export interface ExtractResult {
   stats: LineageStats;
   /** Source workbook filename, without extension. */
   fileLabel: string;
+  /** Optional worksheet integration (additive; populated by the app shell). */
+  worksheets?: WorksheetUsage[];
 }

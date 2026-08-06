@@ -2,7 +2,7 @@ import { useCallback, useState } from 'react';
 import { extractFromTwbx, TableauExtractionError } from '../lib/extractor';
 import { extractSqlFromTwbx } from '../lib/sqlExtractor';
 import type { SqlExtractResult } from '../lib/sqlExtractor';
-import { extractFiltersFromTwbx } from '../lib/filterExtractor';
+import { extractFiltersFromTwbx, extractWorksheetsFromTwbx } from '../lib/filterExtractor';
 import type { FilterExtractResult } from '../lib/filterExtractor';
 import type { ExtractResult } from '../lib/types';
 
@@ -70,6 +70,12 @@ export function useWorkbook() {
         filters = extractFiltersFromTwbx(buffer, file.name);
       } catch {
         filters = null;
+      }
+      // Worksheet usage feeds the graph, dictionary, and exports (additive).
+      try {
+        result.worksheets = extractWorksheetsFromTwbx(buffer, file.name);
+      } catch {
+        result.worksheets = [];
       }
       // Lazy-load the report builder (it inlines vis-network) so the heavy code
       // stays out of the initial page bundle.
