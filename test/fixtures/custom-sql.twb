@@ -19,6 +19,9 @@ WHERE  o.created_at &gt;= DATE '2024-01-01'</relation>
       </connection>
       <column caption='Order ID' datatype='integer' name='[order_id]' role='dimension' type='ordinal' />
       <column caption='Amount' datatype='real' name='[amount]' role='measure' type='quantitative' />
+      <column caption='Region' datatype='string' name='[region]' role='dimension' type='nominal' />
+      <column caption='Created At' datatype='date' name='[created_at]' role='dimension' type='ordinal' />
+      <filter class='quantitative' column='[order_id]' included-values='in-range' />
       <column caption='Region Revenue (RAWSQL)' datatype='real' name='[Calculation_111]' role='measure' type='quantitative'>
         <calculation class='tableau' formula='RAWSQLAGG_REAL(&quot;SUM(%1)&quot;, [amount])' />
       </column>
@@ -50,6 +53,29 @@ WHERE  o.created_at &gt;= DATE '2024-01-01'</relation>
           <datasource-dependencies datasource='federated.0abc123'>
             <column caption='Amount' datatype='real' name='[amount]' role='measure' type='quantitative' />
           </datasource-dependencies>
+          <filter class='categorical' column='[federated.0abc123].[region]' context='true' filter-group='2'>
+            <groupfilter function='union' user:ui-domain='relevant' user:ui-enumeration='inclusive'>
+              <groupfilter function='member' level='[region]' member='&quot;West&quot;' />
+              <groupfilter function='member' level='[region]' member='&quot;East&quot;' />
+            </groupfilter>
+          </filter>
+          <filter class='quantitative' column='[federated.0abc123].[none:amount:qk]' filter-group='3' included-values='in-range'>
+            <min>100</min>
+            <max>5000</max>
+          </filter>
+        </view>
+      </table>
+    </worksheet>
+    <worksheet name='Trends'>
+      <table>
+        <view>
+          <datasource-dependencies datasource='federated.0abc123'>
+            <column caption='Created At' datatype='date' name='[created_at]' role='dimension' type='ordinal' />
+          </datasource-dependencies>
+          <filter class='relative-date' column='[federated.0abc123].[none:created_at:qk]' filter-group='4' />
+          <filter class='categorical' column='[federated.0abc123].[region]' filter-group='2'>
+            <groupfilter function='level-members' level='[region]' user:ui-domain='relevant' user:ui-enumeration='all' />
+          </filter>
         </view>
       </table>
     </worksheet>

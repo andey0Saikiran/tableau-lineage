@@ -2,6 +2,8 @@ import { useCallback, useState } from 'react';
 import { extractFromTwbx, TableauExtractionError } from '../lib/extractor';
 import { extractSqlFromTwbx } from '../lib/sqlExtractor';
 import type { SqlExtractResult } from '../lib/sqlExtractor';
+import { extractFiltersFromTwbx } from '../lib/filterExtractor';
+import type { FilterExtractResult } from '../lib/filterExtractor';
 import type { ExtractResult } from '../lib/types';
 
 // 500 MB: safe because only the .twb XML inside is ever decompressed — the
@@ -14,6 +16,7 @@ export interface WorkbookState {
   status: Status;
   result: ExtractResult | null;
   sql: SqlExtractResult | null;
+  filters: FilterExtractResult | null;
   reportHtml: string | null;
   error: string | null;
   fileName: string | null;
@@ -23,6 +26,7 @@ const INITIAL: WorkbookState = {
   status: 'idle',
   result: null,
   sql: null,
+  filters: null,
   reportHtml: null,
   error: null,
   fileName: null,
@@ -53,18 +57,25 @@ export function useWorkbook() {
     try {
       const buffer = await file.arrayBuffer();
       const result = extractFromTwbx(buffer, file.name);
-      // SQL extraction is additive: a failure here must never sink the analysis.
+      // SQL and filter extraction are additive: a failure in either must never
+      // sink the analysis.
       let sql: SqlExtractResult | null = null;
       try {
         sql = extractSqlFromTwbx(buffer, file.name);
       } catch {
         sql = null;
       }
+      let filters: FilterExtractResult | null = null;
+      try {
+        filters = extractFiltersFromTwbx(buffer, file.name);
+      } catch {
+        filters = null;
+      }
       // Lazy-load the report builder (it inlines vis-network) so the heavy code
       // stays out of the initial page bundle.
       const { buildReportHtml } = await import('../lib/reportTemplate');
       const reportHtml = buildReportHtml(result);
-      setState({ status: 'done', result, sql, reportHtml, error: null, fileName: file.name });
+      setState({ status: 'done', result, sql, filters, reportHtml, error: null, fileName: file.name });
     } catch (err) {
       const message =
         err instanceof TableauExtractionError && /no calculated fields/i.test(err.message)

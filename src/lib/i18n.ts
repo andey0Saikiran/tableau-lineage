@@ -30,6 +30,7 @@ const en = {
   parameters: 'Parameters',
   lodExpressions: 'LOD Calcs',
   tableCalcs: 'Table Calcs',
+  filters: 'Filters',
 
   discardAnalysis: 'Discard',
   analyzeAnother: 'Analyze another file',

@@ -11,5 +11,5 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["src", "../src/lib/extractor.ts", "../src/lib/sqlExtractor.ts", "../src/lib/types.ts"]
+  "include": ["src", "../src/lib/extractor.ts", "../src/lib/sqlExtractor.ts", "../src/lib/filterExtractor.ts", "../src/lib/types.ts"]
 }

@@ -16,9 +16,11 @@ import { DOMParser } from '@xmldom/xmldom';
 import { extractFromTwbx, extractFromXml, TableauExtractionError } from '../../src/lib/extractor';
 import { extractSqlFromTwbx, extractSqlFromXml } from '../../src/lib/sqlExtractor';
 import type { SqlExtractResult } from '../../src/lib/sqlExtractor';
+import { extractFiltersFromTwbx, extractFiltersFromXml } from '../../src/lib/filterExtractor';
+import type { FilterExtractResult } from '../../src/lib/filterExtractor';
 import type { CalculatedField, ExtractResult } from '../../src/lib/types';
 
-const VERSION = '0.2.0';
+const VERSION = '0.3.0';
 
 // ── Workbook loading (cached by path + mtime + size) ──────────────────────────
 
@@ -71,6 +73,32 @@ function loadSql(inputPath: string): SqlExtractResult {
     throw new Error(`Unsupported file type (expected .twbx or .twb): ${abs}`);
   }
   sqlCache.set(abs, { mtimeMs: st.mtimeMs, size: st.size, result });
+  return result;
+}
+
+const filterCache = new Map<string, { mtimeMs: number; size: number; result: FilterExtractResult }>();
+
+function loadFilters(inputPath: string): FilterExtractResult {
+  const abs = path.resolve(inputPath);
+  if (!fs.existsSync(abs)) {
+    throw new Error(`File not found: ${abs}`);
+  }
+  const st = fs.statSync(abs);
+  const hit = filterCache.get(abs);
+  if (hit && hit.mtimeMs === st.mtimeMs && hit.size === st.size) return hit.result;
+
+  const lower = abs.toLowerCase();
+  let result: FilterExtractResult;
+  if (lower.endsWith('.twb')) {
+    result = extractFiltersFromXml(fs.readFileSync(abs, 'utf8'), path.basename(abs).replace(/\.twb$/i, ''));
+  } else if (lower.endsWith('.twbx')) {
+    const buf = fs.readFileSync(abs);
+    const ab = buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength) as ArrayBuffer;
+    result = extractFiltersFromTwbx(ab, path.basename(abs));
+  } else {
+    throw new Error(`Unsupported file type (expected .twbx or .twb): ${abs}`);
+  }
+  filterCache.set(abs, { mtimeMs: st.mtimeMs, size: st.size, result });
   return result;
 }
 
@@ -422,6 +450,37 @@ server.registerTool(
         note: r.has_sql
           ? undefined
           : 'No stored SQL found. This workbook likely uses direct table relations or extracts; runtime-generated queries for live connections are never stored in the file.',
+      });
+    } catch (e) {
+      return fail(e);
+    }
+  },
+);
+
+server.registerTool(
+  'list_filters',
+  {
+    title: 'List the filters in the workbook',
+    description:
+      'Every filter in the workbook, deduplicated across worksheets: the field it acts on (caption-resolved), filter kind (categorical / quantitative / relative-date), whether it is a context filter, which worksheets use it, selected member values when stored, and quantitative ranges. Includes a by_worksheet grouping and the distinct list of fields driving any filter. Data-source filters are marked "(data source filter)".',
+    inputSchema: { path: pathArg },
+  },
+  async ({ path: p }) => {
+    try {
+      const r = loadFilters(p);
+      const byWorksheet: Record<string, { field: string; kind: string; is_context: boolean }[]> = {};
+      for (const flt of r.filters) {
+        for (const ws of flt.worksheets) {
+          (byWorksheet[ws] ??= []).push({ field: flt.field, kind: flt.kind, is_context: flt.is_context });
+        }
+      }
+      return ok({
+        workbook: r.fileLabel,
+        count: r.count,
+        fields_used: r.fields_used,
+        filters: r.filters,
+        by_worksheet: byWorksheet,
+        note: r.count === 0 ? 'No filters found in this workbook.' : undefined,
       });
     } catch (e) {
       return fail(e);

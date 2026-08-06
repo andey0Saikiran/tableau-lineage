@@ -65,8 +65,8 @@ try {
   const tools = await rpc('tools/list', {});
   const names = tools.tools.map((t) => t.name).sort();
   check(
-    'exposes all 7 tools',
-    ['analyze_workbook', 'get_field', 'get_lineage_graph', 'list_calculated_fields', 'list_parameters', 'list_sql_queries', 'trace_dependencies']
+    'exposes all 8 tools',
+    ['analyze_workbook', 'get_field', 'get_lineage_graph', 'list_calculated_fields', 'list_filters', 'list_parameters', 'list_sql_queries', 'trace_dependencies']
       .every((n) => names.includes(n)),
     names.join(', '),
   );
@@ -112,6 +112,23 @@ try {
   const noSql = jsonOf(await rpc('tools/call', { name: 'list_sql_queries', arguments: { path: demoTwbx } }));
   check('demo workbook reports NO stored SQL (no false positives)', noSql.has_sql === false
     && noSql.custom_sql.length === 0 && noSql.note?.length > 0);
+
+  // ── Filters ─────────────────────────────────────────────────────────────────
+  const flt = jsonOf(await rpc('tools/call', { name: 'list_filters', arguments: { path: sqlFixture } }));
+  check('finds 4 deduplicated filters', flt.count === 4, flt.fields_used?.join(', '));
+  const region = flt.filters?.find((x) => x.field === 'Region');
+  check('categorical filter has members + context flag', region?.members?.includes('West')
+    && region?.members?.includes('East') && region?.is_context === true);
+  check('filter merged across worksheets', region?.worksheets?.length === 2
+    && region?.worksheets?.includes('Overview') && region?.worksheets?.includes('Trends'));
+  const amount = flt.filters?.find((x) => x.field === 'Amount');
+  check('quantitative filter has range', amount?.range?.included_values === 'in-range'
+    && amount?.range?.min === '100' && amount?.range?.max === '5000');
+  check('data-source filter is marked', flt.filters?.some((x) => x.worksheets?.includes('(data source filter)')));
+  check('by_worksheet sub-branching works', Array.isArray(flt.by_worksheet?.Trends)
+    && flt.by_worksheet.Trends.length === 2, JSON.stringify(flt.by_worksheet?.Trends));
+  const demoFlt = jsonOf(await rpc('tools/call', { name: 'list_filters', arguments: { path: demoTwbx } }));
+  check('demo workbook filters found (real-world shape)', demoFlt.count === 6, demoFlt.fields_used?.join(', '));
 
   const missing = await rpc('tools/call', { name: 'get_field', arguments: { path: demoTwbx, field: 'No Such Field Xyz' } });
   check('unknown field returns a clean error', missing.isError === true, textOf(missing).slice(0, 60));

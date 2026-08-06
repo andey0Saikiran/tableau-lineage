@@ -32,8 +32,12 @@ the `.twbx` never leaves your machine.
   and `RAWSQL_*` calculated field, each mapped to the connection (class · dbname · server)
   it targets. Runtime-generated live-connection queries are not stored in files, so they
   are explicitly out of scope.
-- **Six metrics at a glance**: data sources, calculated fields, raw fields, parameters,
-  LOD calcs, table calcs.
+- **Seven metrics at a glance**: data sources, calculated fields, raw fields, parameters,
+  LOD calcs, table calcs, filters.
+- **Filters, decoded**: every filter deduplicated across worksheets — the field it acts
+  on, its kind (categorical / quantitative / relative-date), context-filter status,
+  stored member selections and ranges, plus a per-worksheet breakdown showing exactly
+  which sheets filter on what. Data-source filters are called out separately.
 - **Exports**, all generated in-browser:
   - **Interactive HTML**: a self-contained, watermarked report (vis-network inlined, so
     it works offline). The same artifact you see in the app.
@@ -88,7 +92,8 @@ claude mcp add tableau-lineage -- npx -y tableau-lineage-mcp
 
 Tools: `analyze_workbook`, `list_calculated_fields`, `get_field`, `trace_dependencies`,
 `list_parameters`, `get_lineage_graph`, `list_sql_queries` (Custom SQL, Initial SQL,
-stored procs, `RAWSQL_*`). Full docs in [`mcp/`](mcp/).
+stored procs, `RAWSQL_*`), `list_filters` (per-worksheet breakdown, context filters,
+members and ranges). Full docs in [`mcp/`](mcp/).
 
 ## Run locally
 

@@ -3,6 +3,7 @@ import { FileUp, Cpu, Share2 } from 'lucide-react';
 import { Header } from './components/Header';
 import { AnnouncementBar } from './components/AnnouncementBar';
 import { SqlPanel } from './components/SqlPanel';
+import { FiltersPanel } from './components/FiltersPanel';
 import { Footer } from './components/Footer';
 import { FileUpload } from './components/FileUpload';
 import { HeroGraph } from './components/HeroGraph';
@@ -29,7 +30,7 @@ export default function App() {
 
   const t = useMemo(() => makeT(language), [language]);
   const { showToast, ToastViewport } = useToast();
-  const { status, result, sql, reportHtml, error, analyze, reset, clearError } = useWorkbook();
+  const { status, result, sql, filters, reportHtml, error, analyze, reset, clearError } = useWorkbook();
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -55,6 +56,13 @@ export default function App() {
   useEffect(() => setSelectedType(null), [reportHtml]);
 
   const handleSelectType = (type: HighlightType) => {
+    // Filters aren't graph nodes — the card opens the per-worksheet breakdown.
+    if (type === 'filter') {
+      const panel = document.getElementById('filters-panel');
+      panel?.setAttribute('open', '');
+      panel?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
     const next = selectedType === type ? null : type;
     setSelectedType(next);
     try {
@@ -159,7 +167,7 @@ export default function App() {
               </span>
             </div>
 
-            <StatsGrid stats={result.stats} t={t} selected={selectedType} onSelect={handleSelectType} />
+            <StatsGrid stats={result.stats} filtersCount={filters?.count ?? 0} t={t} selected={selectedType} onSelect={handleSelectType} />
 
             <ResultActions
               t={t}
@@ -171,6 +179,8 @@ export default function App() {
               }}
               toast={showToast}
             />
+
+            <FiltersPanel filters={filters} />
 
             <SqlPanel sql={sql} toast={showToast} />
 
