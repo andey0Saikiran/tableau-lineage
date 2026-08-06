@@ -11,7 +11,7 @@ import { StatsGrid, type HighlightType } from './components/StatsGrid';
 import { ResultActions } from './components/ResultActions';
 import { SeoContent } from './components/SeoContent';
 import { VisualizerFrame } from './components/VisualizerFrame';
-import { AboutPanel, PrivacyPanel } from './components/Panels';
+import { AboutPanel, PrivacyPanel, FeaturesPanel } from './components/Panels';
 import { BackgroundEffects } from './components/BackgroundEffects';
 import { useToast } from './components/Toast';
 import { useWorkbook } from './hooks/useWorkbook';
@@ -24,6 +24,7 @@ type ReportWindow = Window & { tlHighlightType?: (type: string) => void };
 export default function App() {
   const [language, setLanguage] = useState<Language>('en');
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [featuresOpen, setFeaturesOpen] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<HighlightType | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -99,6 +100,7 @@ export default function App() {
         t={t}
         language={language}
         onLanguage={setLanguage}
+        onFeatures={() => setFeaturesOpen(true)}
         onAbout={() => setAboutOpen(true)}
         onPrivacy={() => setPrivacyOpen(true)}
       />
@@ -191,6 +193,7 @@ export default function App() {
 
       <Footer t={t} />
 
+      <FeaturesPanel open={featuresOpen} onClose={() => setFeaturesOpen(false)} t={t} />
       <AboutPanel open={aboutOpen} onClose={() => setAboutOpen(false)} t={t} />
       <PrivacyPanel open={privacyOpen} onClose={() => setPrivacyOpen(false)} t={t} />
       {ToastViewport}

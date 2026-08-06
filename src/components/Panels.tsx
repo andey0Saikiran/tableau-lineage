@@ -1,5 +1,5 @@
 import { SlideOver } from './SlideOver';
-import { Info, ShieldCheck } from 'lucide-react';
+import { Info, ShieldCheck, Sparkles, Share2, Filter, Database, Download, Terminal, Globe } from 'lucide-react';
 import { REPO_URL } from '../lib/site';
 import type { TranslationKey } from '../lib/i18n';
 
@@ -101,6 +101,118 @@ export function PrivacyPanel({ open, onClose, t }: PanelProps) {
           className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 hover:text-brand-700"
         >
           Verify it yourself on GitHub →
+        </a>
+      </div>
+    </SlideOver>
+  );
+}
+
+function FeatureGroup({
+  icon,
+  title,
+  items,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  items: React.ReactNode[];
+}) {
+  return (
+    <section>
+      <h3 className="mb-2 flex items-center gap-2 text-sm font-bold uppercase tracking-wide text-muted">
+        {icon} {title}
+      </h3>
+      <ul className="space-y-1.5 text-sm text-muted">
+        {items.map((item, i) => (
+          <li key={i} className="flex gap-2">
+            <span className="mt-[7px] h-1.5 w-1.5 flex-shrink-0 rounded-full bg-brand-400" aria-hidden />
+            <span>{item}</span>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+export function FeaturesPanel({ open, onClose, t }: PanelProps) {
+  const b = (s: string) => <b className="text-ink">{s}</b>;
+  return (
+    <SlideOver open={open} onClose={onClose} title={t('featuresTitle')} icon={<Sparkles className="h-5 w-5 text-brand-600" />}>
+      <div className="space-y-7 text-[15px] leading-relaxed text-ink">
+        <p className="text-muted">
+          Everything the tool reads out of a <code className="rounded bg-slate-100 px-1.5 py-0.5 text-sm text-ink">.twbx</code>,
+          all parsed in your browser with nothing uploaded.
+        </p>
+
+        <FeatureGroup
+          icon={<Share2 className="h-4 w-4 text-brand-600" />}
+          title="Lineage & analysis"
+          items={[
+            <>{b('Interactive dependency graph')}: every field, calculation, parameter, and worksheet as nodes; edges show what feeds what. Cluster, search, zoom, physics.</>,
+            <>{b('Searchable data dictionary')}: every formula grouped by data source, plus per-worksheet sections.</>,
+            <>{b('Seven clickable metrics')}: data sources, calculated fields, raw fields, parameters, LOD calcs, table calcs, filters. Click one to highlight or drill in.</>,
+            <>{b('Field classification')}: calculated vs raw vs parameter, with LOD and table-calc detection.</>,
+          ]}
+        />
+
+        <FeatureGroup
+          icon={<Filter className="h-4 w-4 text-cyan-600" />}
+          title="Filters & worksheets"
+          items={[
+            <>{b('Every filter, deduplicated')}: the field it acts on, its kind (categorical, quantitative, relative-date), context-filter status, selected values, and ranges.</>,
+            <>{b('Per-worksheet breakdown')}: expand any sheet to see exactly what it filters on; data-source filters called out separately.</>,
+            <>{b('Worksheet usage')}: which fields each worksheet uses, in the graph, the dictionary, and the exports.</>,
+          ]}
+        />
+
+        <FeatureGroup
+          icon={<Database className="h-4 w-4 text-violet-600" />}
+          title="Stored SQL"
+          items={[
+            <>{b('Custom SQL queries')} in full text, {b('Initial SQL')}, {b('stored procedures')} with parameters, and {b('RAWSQL calculated fields')}.</>,
+            <>Each statement mapped to the {b('database connection')} it targets (class, database, server), with one-click copy.</>,
+          ]}
+        />
+
+        <FeatureGroup
+          icon={<Download className="h-4 w-4 text-emerald-600" />}
+          title="Exports"
+          items={[
+            <>{b('Interactive HTML report')}: self-contained and offline-ready, the same graph and dictionary in one shareable file.</>,
+            <>{b('CSV')} of the field inventory (with worksheet usage) and {b('JSON')} of the full model.</>,
+          ]}
+        />
+
+        <FeatureGroup
+          icon={<Terminal className="h-4 w-4 text-ink" />}
+          title="AI assistants (MCP)"
+          items={[
+            <>
+              The same engine ships as{' '}
+              <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[13px] text-ink">tableau-lineage-mcp</code>, so
+              Claude, Cursor, and other MCP clients can read workbooks on your machine.
+            </>,
+            <>{b('9 tools')}: analyze, list calculations, field detail, dependency tracing, parameters, lineage graph, SQL, filters, worksheets.</>,
+            <>Runs {b('100% locally')}, same as the site: the workbook never leaves your computer.</>,
+          ]}
+        />
+
+        <FeatureGroup
+          icon={<Globe className="h-4 w-4 text-amber-600" />}
+          title="Practical"
+          items={[
+            <>Workbooks up to {b('500 MB')} (only the workbook XML is ever decompressed).</>,
+            <>{b('Seven interface languages')}, keyboard navigation, AA contrast, reduced-motion support.</>,
+            <>{b('Free and open source')}: no account, no cookies, verifiable code.</>,
+          ]}
+        />
+
+        <a
+          href={REPO_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 hover:text-brand-700"
+        >
+          Explore the code on GitHub →
         </a>
       </div>
     </SlideOver>

@@ -1,4 +1,4 @@
-import { Info, ShieldCheck } from 'lucide-react';
+import { Info, ShieldCheck, Sparkles } from 'lucide-react';
 import { Github } from './BrandIcons';
 import { Logo } from './Logo';
 import { LanguageSelector } from './LanguageSelector';
@@ -9,11 +9,12 @@ interface Props {
   t: (k: TranslationKey) => string;
   language: Language;
   onLanguage: (l: Language) => void;
+  onFeatures: () => void;
   onAbout: () => void;
   onPrivacy: () => void;
 }
 
-export function Header({ t, language, onLanguage, onAbout, onPrivacy }: Props) {
+export function Header({ t, language, onLanguage, onFeatures, onAbout, onPrivacy }: Props) {
   return (
     <header className="sticky top-0 z-30 border-b border-black/5 bg-white/70 backdrop-blur-xl">
       <div className="mx-auto flex max-w-[96rem] items-center justify-between gap-3 px-4 py-3 sm:px-6">
@@ -28,6 +29,14 @@ export function Header({ t, language, onLanguage, onAbout, onPrivacy }: Props) {
         </a>
 
         <nav className="flex animate-slide-in-right items-center gap-1.5 sm:gap-2" aria-label="Primary">
+          <button
+            type="button"
+            onClick={onFeatures}
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-brand-50 hover:text-brand-600"
+          >
+            <Sparkles className="h-4 w-4" />
+            <span className="hidden sm:inline">{t('featuresTitle')}</span>
+          </button>
           <button
             type="button"
             onClick={onAbout}
