@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { FileUp, Cpu, Share2 } from 'lucide-react';
+import { FileUp, Cpu, Share2, Terminal, Copy } from 'lucide-react';
 import { Header } from './components/Header';
 import { AnnouncementBar } from './components/AnnouncementBar';
 import { SqlPanel } from './components/SqlPanel';
@@ -156,6 +156,41 @@ export default function App() {
                 onClearError={clearError}
                 onTryDemo={tryDemo}
               />
+
+              {/* MCP callout: the AI-assistant path, right under the upload card */}
+              <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2.5 rounded-2xl border border-border bg-white/70 p-4 shadow-sm backdrop-blur-sm">
+                <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl bg-ink text-white">
+                  <Terminal className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold text-ink">Works with Claude and Cursor via MCP</p>
+                  <p className="text-xs text-muted">
+                    Let your AI assistant read workbooks on your machine: 9 tools, nothing uploaded.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard
+                        .writeText('claude mcp add tableau-lineage -- npx -y tableau-lineage-mcp')
+                        .then(() => showToast('Install command copied', 'success'))
+                        .catch(() => showToast('Could not copy', 'error'));
+                    }}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-white px-2.5 py-1.5 font-mono text-xs text-ink transition-colors hover:border-brand-500 hover:text-brand-600"
+                  >
+                    <Copy className="h-3 w-3 text-brand-600" /> tableau-lineage-mcp
+                  </button>
+                  <a
+                    href="https://github.com/andey0Saikiran/tableau-lineage/tree/main/mcp"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="whitespace-nowrap text-xs font-semibold text-brand-600 underline decoration-brand-400/50 underline-offset-2 hover:text-brand-700"
+                  >
+                    Set it up →
+                  </a>
+                </div>
+              </div>
             </div>
           </section>
           <SeoContent />
