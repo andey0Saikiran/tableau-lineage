@@ -95,6 +95,25 @@ function buildDatasourceInfo(root: Element): Map<string, DsInfo> {
   return out;
 }
 
+/**
+ * Document-wide internal-name -> caption fallback, mirroring the lineage
+ * extractor's buildFieldMappings. Crucial for dashboards built on PUBLISHED
+ * data sources (downloaded from Tableau Server/Cloud): there the top-level
+ * datasource carries no captions — they only exist on the column stubs inside
+ * each worksheet's <datasource-dependencies>. Without this sweep, filters and
+ * worksheet fields surface raw keys like "Calculation_1234567890".
+ */
+function buildGlobalCaptions(root: Element): Map<string, string> {
+  const map = new Map<string, string>();
+  const columns = root.getElementsByTagName('column');
+  for (let i = 0; i < columns.length; i++) {
+    const name = columns[i].getAttribute('name');
+    const caption = columns[i].getAttribute('caption');
+    if (name && caption && !map.has(name)) map.set(name, caption);
+  }
+  return map;
+}
+
 /** Nearest enclosing worksheet name, or the data-source marker, or null (skip). */
 function filterLocation(el: Element): string | null {
   for (let p = el.parentNode as Element | null; p; p = p.parentNode as Element | null) {
@@ -126,6 +145,7 @@ export function extractFiltersFromXml(
 
 function extractFiltersFromRoot(root: Element, fileLabel: string): FilterExtractResult {
   const dsInfo = buildDatasourceInfo(root);
+  const globalCaptions = buildGlobalCaptions(root);
   const merged = new Map<string, WorkbookFilter>();
 
   const filters = root.getElementsByTagName('filter');
@@ -148,7 +168,10 @@ function extractFiltersFromRoot(root: Element, fileLabel: string): FilterExtract
     }
     const info = m ? dsInfo.get(m[1]) : null;
     const internalField = `[${unwrapFieldToken(stripBrackets(fieldToken))}]`;
-    const field = info?.captions.get(internalField) ?? stripBrackets(internalField);
+    const field =
+      info?.captions.get(internalField) ??
+      globalCaptions.get(internalField) ??
+      stripBrackets(internalField);
     const kind = (f.getAttribute('class') || 'unknown') as FilterKind;
     const isContext = f.getAttribute('context') === 'true';
 
@@ -215,6 +238,7 @@ export function extractWorksheetsFromXml(
 ): WorksheetUsage[] {
   const root = parseRoot(xmlString);
   const dsInfo = buildDatasourceInfo(root);
+  const globalCaptions = buildGlobalCaptions(root);
   const filterResult = extractFiltersFromRoot(root, fileLabel);
 
   const out: WorksheetUsage[] = [];
@@ -231,7 +255,7 @@ export function extractWorksheetsFromXml(
       const resolve = (internal: string | null) => {
         if (!internal) return;
         const clean = `[${unwrapFieldToken(stripBrackets(internal))}]`;
-        fields.add(captions?.get(clean) ?? stripBrackets(clean));
+        fields.add(captions?.get(clean) ?? globalCaptions.get(clean) ?? stripBrackets(clean));
       };
       const cols = block.getElementsByTagName('column');
       for (let c = 0; c < cols.length; c++) {

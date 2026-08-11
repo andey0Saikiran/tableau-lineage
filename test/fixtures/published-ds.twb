@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<workbook source-build='2024.1.2 (20241.24.0314.1200)' version='18.1' xmlns:user='http://www.tableausoftware.com/xml/user'>
+  <preferences />
+  <datasources>
+    <datasource caption='Sales Model (Published)' inline='true' name='sqlproxy.0pub111' version='18.1'>
+      <connection channel='https' class='sqlproxy' dbname='Sales Model' directory='dataserver' port='443' server='tableau.example.com'>
+        <relation name='sqlproxy' table='[sqlproxy]' type='table' />
+      </connection>
+      <column datatype='real' name='[Calculation_5431234567890123]' role='measure' type='quantitative'>
+        <calculation class='tableau' formula='SUM([sales]) / SUM([target])' />
+      </column>
+      <column datatype='integer' name='[sales]' role='measure' type='quantitative' />
+      <column datatype='integer' name='[target]' role='measure' type='quantitative' />
+      <column datatype='string' name='[segment]' role='dimension' type='nominal' />
+    </datasource>
+  </datasources>
+  <worksheets>
+    <worksheet name='Attainment'>
+      <table>
+        <view>
+          <datasource-dependencies datasource='sqlproxy.0pub111'>
+            <column caption='Attainment Ratio' datatype='real' name='[Calculation_5431234567890123]' role='measure' type='quantitative'>
+              <calculation class='tableau' formula='SUM([sales]) / SUM([target])' />
+            </column>
+            <column caption='Customer Segment' datatype='string' name='[segment]' role='dimension' type='nominal' />
+            <column-instance column='[Calculation_5431234567890123]' derivation='None' name='[none:Calculation_5431234567890123:qk]' pivot='key' type='quantitative' />
+          </datasource-dependencies>
+          <filter class='quantitative' column='[sqlproxy.0pub111].[none:Calculation_5431234567890123:qk]' filter-group='2' included-values='in-range'>
+            <min>0.5</min>
+            <max>1.5</max>
+          </filter>
+          <filter class='categorical' column='[sqlproxy.0pub111].[segment]' filter-group='3'>
+            <groupfilter function='union'>
+              <groupfilter function='member' level='[segment]' member='&quot;Enterprise&quot;' />
+            </groupfilter>
+          </filter>
+        </view>
+      </table>
+    </worksheet>
+  </worksheets>
+</workbook>

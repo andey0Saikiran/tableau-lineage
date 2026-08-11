@@ -141,6 +141,20 @@ try {
   check('demo workbook has 12 worksheets (real-world shape)', demoWs.count === 12,
     `${demoWs.count} sheets, first: ${demoWs.worksheets?.[0]?.name}`);
 
+  // ── Published-datasource caption regression (keys like Calculation_123…) ────
+  const pubFixture = path.join(here, '..', '..', 'test', 'fixtures', 'published-ds.twbx');
+  const pubFlt = jsonOf(await rpc('tools/call', { name: 'list_filters', arguments: { path: pubFixture } }));
+  check('published-ds filters resolve captions (no Calculation_ keys)',
+    pubFlt.filters?.some((x) => x.field === 'Attainment Ratio')
+    && pubFlt.filters?.some((x) => x.field === 'Customer Segment')
+    && !pubFlt.filters?.some((x) => /^Calculation_\d+/.test(x.field)),
+    pubFlt.filters?.map((x) => x.field).join(', '));
+  const pubWs = jsonOf(await rpc('tools/call', { name: 'list_worksheets', arguments: { path: pubFixture } }));
+  check('published-ds worksheet fields resolve captions',
+    pubWs.worksheets?.[0]?.fields?.includes('Attainment Ratio')
+    && !pubWs.worksheets?.[0]?.fields?.some((x) => /^Calculation_\d+/.test(x)),
+    pubWs.worksheets?.[0]?.fields?.join(', '));
+
   const missing = await rpc('tools/call', { name: 'get_field', arguments: { path: demoTwbx, field: 'No Such Field Xyz' } });
   check('unknown field returns a clean error', missing.isError === true, textOf(missing).slice(0, 60));
 
