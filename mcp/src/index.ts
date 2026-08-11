@@ -24,8 +24,7 @@ import {
 } from '../../src/lib/filterExtractor';
 import type { FilterExtractResult, WorksheetUsage } from '../../src/lib/filterExtractor';
 import type { CalculatedField, ExtractResult } from '../../src/lib/types';
-
-const VERSION = '0.3.0';
+import { version as VERSION } from '../package.json';
 
 // ── Workbook loading (cached by path + mtime + size) ──────────────────────────
 
