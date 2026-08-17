@@ -4,6 +4,7 @@ import { Header } from './components/Header';
 import { AnnouncementBar } from './components/AnnouncementBar';
 import { SqlPanel } from './components/SqlPanel';
 import { FiltersPanel } from './components/FiltersPanel';
+import { AuditPanel } from './components/AuditPanel';
 import { Footer } from './components/Footer';
 import { FileUpload } from './components/FileUpload';
 import { HeroGraph } from './components/HeroGraph';
@@ -31,7 +32,7 @@ export default function App() {
 
   const t = useMemo(() => makeT(language), [language]);
   const { showToast, ToastViewport } = useToast();
-  const { status, result, sql, filters, reportHtml, error, analyze, reset, clearError } = useWorkbook();
+  const { status, result, sql, filters, audit, reportHtml, error, analyze, reset, clearError } = useWorkbook();
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -216,6 +217,8 @@ export default function App() {
               }}
               toast={showToast}
             />
+
+            <AuditPanel audit={audit} toast={showToast} />
 
             <FiltersPanel filters={filters} />
 

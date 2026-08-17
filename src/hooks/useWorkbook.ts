@@ -4,6 +4,7 @@ import { extractSqlFromXml } from '../lib/sqlExtractor';
 import type { SqlExtractResult } from '../lib/sqlExtractor';
 import { extractFiltersFromXml, extractWorksheetsFromXml } from '../lib/filterExtractor';
 import type { FilterExtractResult } from '../lib/filterExtractor';
+import type { AuditResult } from '../lib/audit';
 import type { ExtractResult } from '../lib/types';
 
 // 500 MB: safe because only the .twb XML inside is ever decompressed — the
@@ -17,6 +18,7 @@ export interface WorkbookState {
   result: ExtractResult | null;
   sql: SqlExtractResult | null;
   filters: FilterExtractResult | null;
+  audit: AuditResult | null;
   reportHtml: string | null;
   error: string | null;
   fileName: string | null;
@@ -29,6 +31,7 @@ const INITIAL: WorkbookState = {
   result: null,
   sql: null,
   filters: null,
+  audit: null,
   reportHtml: null,
   error: null,
   fileName: null,
@@ -99,6 +102,16 @@ export function useWorkbook() {
         partial.push('worksheets');
       }
 
+      // Audit runs on the already-parsed model. Lazy-imported so none of it
+      // touches the landing-page bundle.
+      let audit: AuditResult | null = null;
+      try {
+        const { auditWorkbook } = await import('../lib/audit');
+        audit = auditWorkbook({ result, filters, sql });
+      } catch {
+        partial.push('audit');
+      }
+
       // Lazy-load the report builder (it inlines vis-network) so the heavy code
       // stays out of the initial page bundle.
       const { buildReportHtml } = await import('../lib/reportTemplate');
@@ -108,6 +121,7 @@ export function useWorkbook() {
         result,
         sql,
         filters,
+        audit,
         reportHtml,
         error: null,
         fileName: file.name,
