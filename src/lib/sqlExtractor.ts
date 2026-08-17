@@ -4,8 +4,7 @@
 // Honest scope note: a workbook only STORES SQL the author wrote. The queries
 // Tableau generates at runtime for live connections are not in the file.
 
-import { unzipSync } from 'fflate';
-import { TableauExtractionError } from './extractor';
+import { TableauExtractionError, readTwbXml } from './extractor';
 
 export interface SqlConnection {
   class: string;
@@ -169,22 +168,6 @@ export function extractSqlFromXml(
   return result;
 }
 
-const MAX_TWB_BYTES = 250 * 1024 * 1024; // guardrail on the decompressed .twb XML only
-
 export function extractSqlFromTwbx(buffer: ArrayBuffer, filename = 'workbook.twbx'): SqlExtractResult {
-  const bytes = new Uint8Array(buffer);
-  let entries: Record<string, Uint8Array>;
-  try {
-    entries = unzipSync(bytes, { filter: (file) => file.name.toLowerCase().endsWith('.twb') });
-  } catch {
-    throw new TableauExtractionError('This file is not a valid .twbx archive.');
-  }
-  const twbName = Object.keys(entries)[0];
-  if (!twbName) throw new TableauExtractionError('No .twb workbook was found inside the .twbx archive.');
-  const twbBytes = entries[twbName];
-  if (twbBytes.length > MAX_TWB_BYTES) {
-    throw new TableauExtractionError('This workbook is unusually large to parse. Try a smaller .twbx.');
-  }
-  const xml = new TextDecoder('utf-8').decode(twbBytes);
-  return extractSqlFromXml(xml, filename.replace(/\.twbx$/i, ''));
+  return extractSqlFromXml(readTwbXml(buffer), filename.replace(/\.twbx$/i, ''));
 }

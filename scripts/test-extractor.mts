@@ -12,7 +12,7 @@ import { DOMParser } from '@xmldom/xmldom';
 // The extractor calls `new DOMParser()` at runtime — provide one for Node.
 (globalThis as unknown as { DOMParser: unknown }).DOMParser = DOMParser;
 
-const { extractFromTwbx, extractFromXml } = await import('../src/lib/extractor.ts');
+const { extractFromTwbx, extractFromXml, stripNonCode } = await import('../src/lib/extractor.ts');
 
 const FIXTURES = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'test', 'fixtures');
 
@@ -152,6 +152,58 @@ console.log('\n=== Tableau lineage extractor — parity & regression tests ===\n
   check('collision: stored formula is clean & readable',
     adjFormula === '[Discount] - [Discount]' && !adjFormula.includes('[Parameters].') && !adjFormula.includes(String.fromCharCode(1)),
     JSON.stringify(adjFormula));
+}
+
+// ── v1.0 correctness fixes: comments/strings, column inventory, name collisions ─
+// These three underpin the unused-field audit. If any regress, the audit starts
+// telling people a field is safe to delete when it is not.
+{
+  console.log('\ncorrectness.twbx (comments, string literals, full column inventory)');
+  const r = load('correctness.twbx');
+  const byKey = new Map(r.fields.map((f) => [`${f.datasource}|${f.field_name}`, f]));
+
+  const marginA = byKey.get('Sales A|Margin');
+  const net = byKey.get('Sales A|Net Amount');
+
+  // FIX: a reference that appears only inside a // comment is not a dependency.
+  check('no phantom dep from a line comment',
+    marginA?.ingredients.some((i) => /deprecated/i.test(i)) === false,
+    JSON.stringify(marginA?.ingredients));
+  // FIX: a bracketed token inside a string literal is not a dependency either.
+  check('no phantom dep from a string literal',
+    marginA?.ingredients.some((i) => /Ghost/i.test(i)) === false);
+  // ...while every genuine reference in the same formula survives.
+  check('real deps still extracted alongside stripped noise',
+    ['Amount', 'Cost', 'Region'].every((n) => marginA?.ingredients.includes(n)) === true,
+    JSON.stringify(marginA?.ingredients));
+  check('no phantom dep from a /* block comment */',
+    net?.ingredients.some((i) => /deprecated/i.test(i)) === false &&
+      net?.ingredients.includes('Amount') === true);
+  // A `//` inside a string (a URL) must not swallow the rest of the line.
+  check('URL inside a string does not start a comment',
+    stripNonCode('IF [a]="http://x" THEN [b] END').includes('[b]'));
+  // The displayed formula keeps its comments; only dependency scanning ignores them.
+  check('display formula still shows the original comment',
+    marginA?.formula.includes('// was') === true);
+
+  // FIX: full column inventory — columns nothing references are now visible.
+  check('allColumns includes a column no formula references',
+    r.allColumns.some((c) => c.name === 'Never Used Column'),
+    `${r.allColumns.length} columns`);
+  check('allColumns records hidden flag',
+    r.allColumns.find((c) => c.name === 'Hidden Column')?.hidden === true);
+  check('rawFields alone could NOT see it (the bug this fixes)',
+    r.rawFields.includes('Never Used Column') === false);
+  check('allColumns spans both data sources',
+    new Set(r.allColumns.map((c) => c.datasource)).size === 2);
+
+  // FIX: same caption in two data sources stays two distinct fields.
+  const margins = r.fields.filter((f) => f.field_name === 'Margin');
+  check('same-named calcs in two data sources stay distinct',
+    margins.length === 2 && new Set(margins.map((m) => m.datasource)).size === 2,
+    margins.map((m) => m.datasource).join(' + '));
+  check('each same-named calc keeps its own formula',
+    byKey.get('Sales B|Margin')?.ingredients.join(',') === 'Gross,Tax');
 }
 
 console.log(`\n=== ${failures === 0 ? 'ALL CHECKS PASSED' : failures + ' CHECK(S) FAILED'} ===\n`);

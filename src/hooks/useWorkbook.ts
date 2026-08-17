@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react';
-import { extractFromTwbx, TableauExtractionError } from '../lib/extractor';
-import { extractSqlFromTwbx } from '../lib/sqlExtractor';
+import { extractFromXml, readTwbXml, TableauExtractionError } from '../lib/extractor';
+import { extractSqlFromXml } from '../lib/sqlExtractor';
 import type { SqlExtractResult } from '../lib/sqlExtractor';
-import { extractFiltersFromTwbx, extractWorksheetsFromTwbx } from '../lib/filterExtractor';
+import { extractFiltersFromXml, extractWorksheetsFromXml } from '../lib/filterExtractor';
 import type { FilterExtractResult } from '../lib/filterExtractor';
 import type { ExtractResult } from '../lib/types';
 
@@ -20,6 +20,8 @@ export interface WorkbookState {
   reportHtml: string | null;
   error: string | null;
   fileName: string | null;
+  /** Sections that failed to parse, so the UI can say the view is partial. */
+  partialSections: string[];
 }
 
 const INITIAL: WorkbookState = {
@@ -30,6 +32,7 @@ const INITIAL: WorkbookState = {
   reportHtml: null,
   error: null,
   fileName: null,
+  partialSections: [],
 };
 
 /**
@@ -40,7 +43,7 @@ export function useWorkbook() {
   const [state, setState] = useState<WorkbookState>(INITIAL);
 
   const analyze = useCallback(async (file: File) => {
-    if (!/\.twbx$/i.test(file.name)) {
+    if (!/\.twbx?$/i.test(file.name)) {
       setState({ ...INITIAL, status: 'error', error: 'invalidFile' });
       return;
     }
@@ -51,37 +54,65 @@ export function useWorkbook() {
 
     setState({ ...INITIAL, status: 'parsing', fileName: file.name });
 
-    // Yield a frame so the parsing state paints before the (sync) heavy work.
-    await new Promise((r) => requestAnimationFrame(() => r(null)));
+    // Yield so the parsing state paints before the (synchronous) heavy work.
+    // setTimeout rather than requestAnimationFrame: rAF is suspended while the
+    // tab is hidden, which would leave the analysis wedged in "Analyzing…" for
+    // anyone who drops a file and switches away.
+    await new Promise((r) => setTimeout(r, 0));
 
     try {
       const buffer = await file.arrayBuffer();
-      const result = extractFromTwbx(buffer, file.name);
-      // SQL and filter extraction are additive: a failure in either must never
-      // sink the analysis.
+      const label = file.name.replace(/\.twbx?$/i, '');
+
+      // Unzip and parse ONCE, then share the parsed document with every
+      // extractor. Previously each extractor re-unzipped and re-parsed the same
+      // XML (4 unzips, 5 parses) which dominated the cost on large workbooks.
+      const xml = /\.twb$/i.test(file.name)
+        ? new TextDecoder('utf-8').decode(new Uint8Array(buffer))
+        : readTwbXml(buffer);
+
+      const result = extractFromXml(xml, label);
+
+      // The sections below are additive: one failing must never sink the whole
+      // analysis, but the user is told the view is partial rather than silently
+      // being shown less than the workbook contains.
+      const partial: string[] = [];
+
       let sql: SqlExtractResult | null = null;
       try {
-        sql = extractSqlFromTwbx(buffer, file.name);
+        sql = extractSqlFromXml(xml, label);
       } catch {
-        sql = null;
+        partial.push('SQL');
       }
+
       let filters: FilterExtractResult | null = null;
       try {
-        filters = extractFiltersFromTwbx(buffer, file.name);
+        filters = extractFiltersFromXml(xml, label);
       } catch {
-        filters = null;
+        partial.push('filters');
       }
-      // Worksheet usage feeds the graph, dictionary, and exports (additive).
+
       try {
-        result.worksheets = extractWorksheetsFromTwbx(buffer, file.name);
+        result.worksheets = extractWorksheetsFromXml(xml, label);
       } catch {
         result.worksheets = [];
+        partial.push('worksheets');
       }
+
       // Lazy-load the report builder (it inlines vis-network) so the heavy code
       // stays out of the initial page bundle.
       const { buildReportHtml } = await import('../lib/reportTemplate');
       const reportHtml = buildReportHtml(result);
-      setState({ status: 'done', result, sql, filters, reportHtml, error: null, fileName: file.name });
+      setState({
+        status: 'done',
+        result,
+        sql,
+        filters,
+        reportHtml,
+        error: null,
+        fileName: file.name,
+        partialSections: partial,
+      });
     } catch (err) {
       const message =
         err instanceof TableauExtractionError && /no calculated fields/i.test(err.message)

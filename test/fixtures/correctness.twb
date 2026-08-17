@@ -1,0 +1,67 @@
+<?xml version='1.0' encoding='utf-8' ?>
+<workbook source-build='2024.1.2 (20241.24.0314.1200)' version='18.1' xmlns:user='http://www.tableausoftware.com/xml/user'>
+  <preferences />
+  <datasources>
+    <!-- Datasource A: exercises comment/string phantom deps + unused columns -->
+    <datasource caption='Sales A' inline='true' name='federated.aaa111' version='18.1'>
+      <connection class='federated'>
+        <named-connections>
+          <named-connection caption='sales-db' name='postgres.aaa'>
+            <connection class='postgres' dbname='sales' server='db.example.com' />
+          </named-connection>
+        </named-connections>
+        <relation connection='postgres.aaa' name='orders' table='[public].[orders]' type='table' />
+      </connection>
+      <column caption='Amount' datatype='real' name='[amount]' role='measure' type='quantitative' />
+      <column caption='Cost' datatype='real' name='[cost]' role='measure' type='quantitative' />
+      <column caption='Deprecated Field' datatype='real' name='[deprecated_field]' role='measure' type='quantitative' />
+      <column caption='Never Used Column' datatype='string' name='[never_used_column]' role='dimension' type='nominal' />
+      <column caption='Hidden Column' datatype='string' hidden='true' name='[hidden_column]' role='dimension' type='nominal' />
+      <column caption='Region' datatype='string' name='[region]' role='dimension' type='nominal' />
+
+      <!-- Phantom-dep case: the ONLY mention of [Deprecated Field] is inside a
+           line comment, and the only mention of [Ghost In String] is inside a
+           string literal. Neither may be reported as a dependency. The URL in
+           the string also proves `//` inside a string does not start a comment. -->
+      <column caption='Margin' datatype='real' name='[Calculation_margin]' role='measure' type='quantitative'>
+        <calculation class='tableau' formula='// was [deprecated_field] before 2024, see https://wiki/x&#10;IF CONTAINS([region], &quot;[Ghost In String]&quot;) THEN [amount] - [cost] ELSE 0 END' />
+      </column>
+
+      <!-- Block-comment variant -->
+      <column caption='Net Amount' datatype='real' name='[Calculation_net]' role='measure' type='quantitative'>
+        <calculation class='tableau' formula='/* legacy: [deprecated_field] */ [amount] * 0.9' />
+      </column>
+    </datasource>
+
+    <!-- Datasource B: has a calc with the SAME caption as one in A -->
+    <datasource caption='Sales B' inline='true' name='federated.bbb222' version='18.1'>
+      <connection class='federated'>
+        <named-connections>
+          <named-connection caption='warehouse-db' name='postgres.bbb'>
+            <connection class='postgres' dbname='warehouse' server='dw.example.com' />
+          </named-connection>
+        </named-connections>
+        <relation connection='postgres.bbb' name='invoices' table='[public].[invoices]' type='table' />
+      </connection>
+      <column caption='Gross' datatype='real' name='[gross]' role='measure' type='quantitative' />
+      <column caption='Tax' datatype='real' name='[tax]' role='measure' type='quantitative' />
+      <!-- SAME caption "Margin" as in Sales A, but a different formula and different inputs -->
+      <column caption='Margin' datatype='real' name='[Calculation_margin_b]' role='measure' type='quantitative'>
+        <calculation class='tableau' formula='[gross] - [tax]' />
+      </column>
+    </datasource>
+  </datasources>
+  <worksheets>
+    <worksheet name='Overview'>
+      <table>
+        <view>
+          <datasource-dependencies datasource='federated.aaa111'>
+            <column caption='Margin' datatype='real' name='[Calculation_margin]' role='measure' type='quantitative'>
+              <calculation class='tableau' formula='IF CONTAINS([region], &quot;[Ghost In String]&quot;) THEN [amount] - [cost] ELSE 0 END' />
+            </column>
+          </datasource-dependencies>
+        </view>
+      </table>
+    </worksheet>
+  </worksheets>
+</workbook>

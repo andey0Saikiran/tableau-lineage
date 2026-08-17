@@ -24,6 +24,25 @@ export interface Parameter {
   allowed_values: { value: string; alias?: string }[] | null;
 }
 
+/**
+ * Every column declared in the workbook, whether or not any calculation
+ * references it. The lineage extractor's `rawFields` only ever contained
+ * columns mentioned inside a formula, so columns that exist but are used
+ * nowhere were invisible — precisely the ones an unused-field audit must find.
+ */
+export interface WorkbookColumn {
+  /** Caption when present, otherwise the de-bracketed internal name. */
+  name: string;
+  /** Raw bracketed internal name, e.g. `[Calculation_123]`. */
+  internal_name: string;
+  datasource: string;
+  datatype: string;
+  /** 'dimension' | 'measure' | '' when unstated. */
+  role: string;
+  hidden: boolean;
+  is_calculated: boolean;
+}
+
 export interface LineageStats {
   datasources: number;
   calculated_fields: number;
@@ -54,6 +73,8 @@ export interface ExtractResult {
   stats: LineageStats;
   /** Source workbook filename, without extension. */
   fileLabel: string;
+  /** Every declared column, including ones no formula references. */
+  allColumns: WorkbookColumn[];
   /** Optional worksheet integration (additive; populated by the app shell). */
   worksheets?: WorksheetUsage[];
 }

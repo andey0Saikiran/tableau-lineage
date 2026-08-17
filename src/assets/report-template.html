@@ -338,6 +338,28 @@
         const parameterData = {};
         parameters.forEach(p => { parameterData[p.name] = p; });
 
+        // Graph node ids are "<data source> <field name>". Bare names are not
+        // unique: two data sources can each define a field with the same caption,
+        // and keying on the name alone merged them into a single node.
+        const NODE_SEP = ' ';
+        function nodeKey(ds, name) { return String(ds) + NODE_SEP + String(name); }
+        /** Bare label -> node ids that carry it (populated while the graph builds). */
+        const idsByLabel = new Map();
+        function rememberLabel(label, id) {
+            if (!idsByLabel.has(label)) idsByLabel.set(label, []);
+            const list = idsByLabel.get(label);
+            if (!list.includes(id)) list.push(id);
+        }
+        /** Resolve a bare field name to a node id, preferring a given data source. */
+        function resolveNodeId(name, preferDs) {
+            if (preferDs) {
+                const exact = nodeKey(preferDs, name);
+                if (nodesDS.get(exact)) return exact;
+            }
+            const list = idsByLabel.get(name);
+            return list && list.length ? list[0] : null;
+        }
+
         // Clean "sliders" glyph for parameters (replaces an emoji that read as a cross).
         const PARAM_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="vertical-align:-2px"><path d="M5 21v-6M5 11V3M12 21v-9M12 8V3M19 21v-4M19 13V3"/><circle cx="5" cy="13" r="2"/><circle cx="12" cy="6" r="2"/><circle cx="19" cy="15" r="2"/></svg>';
 
@@ -355,75 +377,115 @@
         function buildGraph() {
             const container = document.getElementById('network');
             const added = new Set();
-            const calcNames = new Set(data.map(d => d.field_name));
+
+            // Node ids are qualified by data source. Two data sources may each
+            // define a field with the same caption; keying nodes on the bare name
+            // merged them into one and silently reattributed the second one's
+            // formula and edges. Labels stay bare so the graph still reads simply.
+            const calcByKey = new Map();   // "ds name" -> calc
+            const calcByName = new Map();  // "name" -> [calc, ...] (cross-source fallback)
+            data.forEach(d => {
+                calcByKey.set(nodeKey(d.datasource, d.field_name), d);
+                if (!calcByName.has(d.field_name)) calcByName.set(d.field_name, []);
+                calcByName.get(d.field_name).push(d);
+            });
+            // Exposed so dictionary/search/deep-links can resolve a bare name.
+            window.__tlCalcByKey = calcByKey;
+            window.__tlCalcByName = calcByName;
+
+            /** Resolve a referenced name to its calc, preferring the same data source. */
+            function lookupCalc(name, preferDs) {
+                return calcByKey.get(nodeKey(preferDs, name)) || (calcByName.get(name) || [])[0] || null;
+            }
+
+            const nodeBatch = [];
+            const edgeBatch = [];
 
             data.forEach(item => {
-                if (!added.has(item.field_name)) {
-                    nodesDS.add({
-                        id: item.field_name, label: item.field_name, group: 'calc',
+                const itemId = nodeKey(item.datasource, item.field_name);
+                if (!added.has(itemId)) {
+                    nodeBatch.push({
+                        id: itemId, label: item.field_name, group: 'calc',
                         datasource: item.datasource, formula: item.formula, ingredients: item.ingredients,
                         paramDeps: item.parameter_dependencies || [], fieldType: item.field_type || 'calculated',
                         isTableCalc: item.is_table_calc || false, lodType: item.lod_type || null, isParameter: false,
                         title: item.field_name + '\n(' + item.datasource + ')'
                     });
-                    added.add(item.field_name);
+                    added.add(itemId);
                 }
                 item.ingredients.forEach(ing => {
-                    if (!added.has(ing)) {
-                        const isCalc = calcNames.has(ing);
-                        const ingData = isCalc ? data.find(d => d.field_name === ing) : null;
-                        nodesDS.add({
-                            id: ing, label: ing, group: isCalc ? 'calc' : 'raw',
-                            datasource: ingData ? ingData.datasource : item.datasource,
+                    const ingData = lookupCalc(ing, item.datasource);
+                    const ingDs = ingData ? ingData.datasource : item.datasource;
+                    const ingId = nodeKey(ingDs, ing);
+                    if (!added.has(ingId)) {
+                        nodeBatch.push({
+                            id: ingId, label: ing, group: ingData ? 'calc' : 'raw',
+                            datasource: ingDs,
                             formula: ingData ? ingData.formula : null, ingredients: ingData ? ingData.ingredients : [],
                             paramDeps: ingData ? (ingData.parameter_dependencies || []) : [],
                             fieldType: ingData ? (ingData.field_type || 'calculated') : 'raw',
                             isTableCalc: false, lodType: null, isParameter: false,
-                            title: ing + '\n(' + (ingData ? ingData.datasource : item.datasource) + ')'
+                            title: ing + '\n(' + ingDs + ')'
                         });
-                        added.add(ing);
+                        added.add(ingId);
                     }
-                    edgesDS.add({ from: ing, to: item.field_name, arrows: 'to' });
+                    edgeBatch.push({ from: ingId, to: itemId, arrows: 'to' });
                 });
                 (item.parameter_dependencies || []).forEach(param => {
-                    if (!added.has(param)) {
+                    const paramId = nodeKey('Parameters', param);
+                    if (!added.has(paramId)) {
                         const paramInfo = parameterData[param];
-                        nodesDS.add({
-                            id: param, label: param, group: 'parameter', datasource: 'Parameters',
+                        nodeBatch.push({
+                            id: paramId, label: param, group: 'parameter', datasource: 'Parameters',
                             formula: null, ingredients: [], paramDeps: [], fieldType: 'parameter',
                             isTableCalc: false, lodType: null, isParameter: true,
                             paramValue: paramInfo ? paramInfo.value : null,
                             paramDatatype: paramInfo ? paramInfo.datatype : null,
                             title: param + '\n(Parameter)'
                         });
-                        added.add(param);
+                        added.add(paramId);
                     }
-                    edgesDS.add({ from: param, to: item.field_name, arrows: 'to' });
+                    edgeBatch.push({ from: paramId, to: itemId, arrows: 'to' });
                 });
             });
+
+            // Batch inserts: one DataSet write instead of one per node/edge.
+            nodesDS.add(nodeBatch);
+            edgesDS.add(edgeBatch);
+            nodeBatch.forEach(n => rememberLabel(n.label, n.id));
 
             // Worksheet integration: one hexagon per sheet, wired to the fields it
             // uses (dashed) and the fields it filters on (solid cyan). Only fields
             // already present in the lineage graph are linked, to avoid clutter.
+            // Worksheets reference fields by bare caption, so each one is resolved
+            // to a qualified node id before an edge is drawn.
             worksheets.forEach(ws => {
-                const usable = (ws.fields || []).filter(f => added.has(f));
                 const filterFields = new Set((ws.filters || []).map(f => f.field));
-                const filterable = [...filterFields].filter(f => added.has(f));
+                const usable = [];
+                (ws.fields || []).forEach(f => {
+                    const id = resolveNodeId(f);
+                    if (id && !filterFields.has(f)) usable.push({ name: f, id });
+                });
+                const filterable = [];
+                filterFields.forEach(f => {
+                    const id = resolveNodeId(f);
+                    if (id) filterable.push({ name: f, id });
+                });
                 if (usable.length === 0 && filterable.length === 0) return;
                 const wsId = WS_PREFIX + '::' + ws.name;
                 nodesDS.add({
                     id: wsId, label: ws.name, group: 'worksheet', datasource: 'Worksheets',
-                    formula: null, ingredients: usable, paramDeps: [], fieldType: 'worksheet',
+                    formula: null, ingredients: usable.map(u => u.name), paramDeps: [], fieldType: 'worksheet',
                     isTableCalc: false, lodType: null, isParameter: false,
                     wsFilters: ws.filters || [],
                     title: ws.name + '\n(worksheet: ' + usable.length + ' fields, ' + (ws.filters || []).length + ' filters)'
                 });
-                usable.forEach(f => {
-                    if (filterFields.has(f)) return; // drawn as a filter edge below
-                    edgesDS.add({ from: f, to: wsId, arrows: 'to', dashes: [4, 4], color: { color: '#5eead4' }, wsEdge: true, title: 'used by ' + ws.name });
+                rememberLabel(ws.name, wsId);
+                usable.forEach(u => {
+                    edgesDS.add({ from: u.id, to: wsId, arrows: 'to', dashes: [4, 4], color: { color: '#5eead4' }, wsEdge: true, title: 'used by ' + ws.name });
                 });
-                filterable.forEach(f => {
-                    edgesDS.add({ from: f, to: wsId, arrows: 'to', color: { color: '#06b6d4' }, width: 2, wsEdge: true, title: 'filters ' + ws.name });
+                filterable.forEach(u => {
+                    edgesDS.add({ from: u.id, to: wsId, arrows: 'to', color: { color: '#06b6d4' }, width: 2, wsEdge: true, title: 'filters ' + ws.name });
                 });
             });
 
@@ -544,7 +606,11 @@
                 depsSection.style.display = 'block';
                 document.getElementById('nodeDeps').innerHTML = allDeps.map(dep => {
                     const isParam = parameterNames.has(dep);
-                    return '<button type="button" class="dep-tag' + (isParam ? ' param' : '') + '" onclick="goToNode(this.dataset.node)" data-node="' + escAttr(dep) + '">' + escHtml(dep) + '</button>';
+                    // data-ds carries the owning data source so a bare name resolves
+                    // to the right node when two sources share a field caption.
+                    return '<button type="button" class="dep-tag' + (isParam ? ' param' : '') +
+                        '" onclick="goToNode(this.dataset.node, this.dataset.ds)" data-node="' + escAttr(dep) +
+                        '" data-ds="' + escAttr(isParam ? 'Parameters' : (node.datasource || '')) + '">' + escHtml(dep) + '</button>';
                 }).join('');
             } else { depsSection.style.display = 'none'; }
             document.getElementById('nodePanel').classList.add('visible');
@@ -552,12 +618,14 @@
 
         function closePanel() { document.getElementById('nodePanel').classList.remove('visible'); }
 
-        function goToNode(nodeId) {
-            const node = nodesDS.get(nodeId);
+        /** Accepts a qualified node id OR a bare field name (with optional source hint). */
+        function goToNode(nodeIdOrName, preferDs) {
+            const id = nodesDS.get(nodeIdOrName) ? nodeIdOrName : resolveNodeId(nodeIdOrName, preferDs);
+            const node = id && nodesDS.get(id);
             if (node) {
                 const clusterId = 'cluster_' + node.datasource;
                 if (network.body.nodes[clusterId]) { network.openCluster(clusterId); clustered = false; }
-                setTimeout(() => { highlightNode(nodeId); showPanel(nodeId); }, 100);
+                setTimeout(() => { highlightNode(id); showPanel(id); }, 100);
             }
         }
 
@@ -671,11 +739,11 @@
                 html += '<details class="ds-accordion" data-ds="' + escAttr(ds.toLowerCase()) + '" open><summary class="ds-header"><div class="ds-info"><div class="ds-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/></svg></div><span class="ds-name">' + escHtml(ds) + '</span></div><div class="ds-meta"><span class="ds-count">' + items.length + ' fields</span><span class="ds-chevron">▶</span></div></summary><div class="field-list">';
                 items.forEach(item => {
                     const allDeps = [...(item.ingredients || []), ...(item.parameter_dependencies || [])];
-                    html += '<div class="field-card" data-name="' + escAttr(item.field_name.toLowerCase()) + '"><div class="field-header"><div class="field-name">ƒx ' + escHtml(item.field_name) + '</div><div class="field-actions"><button type="button" class="field-btn" data-formula="' + escAttr(item.formula) + '" onclick="copyText(this.dataset.formula)">Copy</button><button type="button" class="field-btn" data-node="' + escAttr(item.field_name) + '" onclick="viewInGraph(this.dataset.node)">Graph</button></div></div><div class="field-formula">' + escHtml(item.formula) + '</div>';
+                    html += '<div class="field-card" data-name="' + escAttr(item.field_name.toLowerCase()) + '" data-formula-text="' + escAttr((item.formula || '').toLowerCase()) + '"><div class="field-header"><div class="field-name">ƒx ' + escHtml(item.field_name) + '</div><div class="field-actions"><button type="button" class="field-btn" data-formula="' + escAttr(item.formula) + '" onclick="copyText(this.dataset.formula)">Copy</button><button type="button" class="field-btn" data-node="' + escAttr(item.field_name) + '" data-ds="' + escAttr(ds) + '" onclick="viewInGraph(this.dataset.node, this.dataset.ds)">Graph</button></div></div><div class="field-formula">' + escHtml(item.formula) + '</div>';
                     if (allDeps.length > 0) {
                         html += '<div class="field-deps"><span class="field-deps-label">Uses:</span>' + allDeps.map(dep => {
                             const isParam = parameterNames.has(dep);
-                            return '<button type="button" class="dep-tag' + (isParam ? ' param' : '') + '" data-node="' + escAttr(dep) + '" onclick="viewInGraph(this.dataset.node)">' + escHtml(dep) + '</button>';
+                            return '<button type="button" class="dep-tag' + (isParam ? ' param' : '') + '" data-node="' + escAttr(dep) + '" data-ds="' + escAttr(isParam ? 'Parameters' : ds) + '" onclick="viewInGraph(this.dataset.node, this.dataset.ds)">' + escHtml(dep) + '</button>';
                         }).join('') + '</div>';
                     }
                     html += '</div>';
@@ -699,11 +767,14 @@
             });
         }
 
-        function viewInGraph(fieldName) {
+        function viewInGraph(fieldName, preferDs) {
             switchView('graph', document.getElementById('tab-graph'));
             document.getElementById('graphSearch').value = fieldName;
             setTimeout(() => {
-                const node = nodesDS.get().find(n => n.label === fieldName);
+                // Prefer the data source the dictionary entry came from, so a field
+                // caption shared by two sources opens the one that was clicked.
+                const id = resolveNodeId(fieldName, preferDs);
+                const node = id && nodesDS.get(id);
                 if (node) {
                     const clusterId = 'cluster_' + node.datasource;
                     if (network.body.nodes[clusterId]) { network.openCluster(clusterId); clustered = false; }

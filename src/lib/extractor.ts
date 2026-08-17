@@ -28,6 +28,7 @@ import type {
   LineageStats,
   LodType,
   Parameter,
+  WorkbookColumn,
 } from './types';
 
 export class TableauExtractionError extends Error {
@@ -197,10 +198,12 @@ function extractCalculatedFields(root: Element, s: ExtractState): void {
       const rawFormula = calc.getAttribute('formula') || '';
 
       // `tagged` carries PARAM_TAG markers on resolved parameter refs; `formula`
-      // is the clean, human-readable version stored on the field.
+      // is the clean, human-readable version stored on the field. Dependencies
+      // are read from a copy with comments and string literals blanked out, so
+      // a commented-out reference never counts as real usage.
       const tagged = replaceFieldNames(rawFormula, s);
       const formula = tagged.split(PARAM_TAG).join('');
-      const { ingredients, paramDeps } = extractDependencies(tagged);
+      const { ingredients, paramDeps } = extractDependencies(stripNonCode(tagged));
       const { fieldType, isTableCalc, lodType } = determineFieldType(formula);
 
       s.calculatedFields.push({
@@ -237,6 +240,76 @@ function replaceFieldNames(formula: string, s: ExtractState): string {
   return formula;
 }
 
+/**
+ * Blank out comments and string literals so they cannot produce phantom
+ * dependencies. Without this, `// replaced [Old Field]` or `CONTAINS([x],"[y]")`
+ * make dead fields look alive, which would corrupt any unused-field audit.
+ *
+ * Character scanner rather than a regex: a `//` inside a string literal (say
+ * "https://example.com") must not start a comment. Removed spans are replaced
+ * with spaces so offsets into the formula stay meaningful.
+ */
+export function stripNonCode(formula: string): string {
+  let out = '';
+  let i = 0;
+  const n = formula.length;
+
+  while (i < n) {
+    const c = formula[i];
+    const next = i + 1 < n ? formula[i + 1] : '';
+
+    // Line comment: `//` to end of line.
+    if (c === '/' && next === '/') {
+      while (i < n && formula[i] !== '\n') {
+        out += ' ';
+        i++;
+      }
+      continue;
+    }
+
+    // Block comment: `/* ... */` (unterminated runs to the end).
+    if (c === '/' && next === '*') {
+      out += '  ';
+      i += 2;
+      while (i < n && !(formula[i] === '*' && formula[i + 1] === '/')) {
+        out += formula[i] === '\n' ? '\n' : ' ';
+        i++;
+      }
+      if (i < n) {
+        out += '  ';
+        i += 2;
+      }
+      continue;
+    }
+
+    // String literal: single or double quoted, backslash escapes honoured.
+    if (c === '"' || c === "'") {
+      const quote = c;
+      out += ' ';
+      i++;
+      while (i < n && formula[i] !== quote) {
+        if (formula[i] === '\\' && i + 1 < n) {
+          out += '  ';
+          i += 2;
+          continue;
+        }
+        out += formula[i] === '\n' ? '\n' : ' ';
+        i++;
+      }
+      if (i < n) {
+        out += ' '; // closing quote
+        i++;
+      }
+      continue;
+    }
+
+    out += c;
+    i++;
+  }
+
+  return out;
+}
+
 function extractDependencies(taggedFormula: string): {
   ingredients: Set<string>;
   paramDeps: Set<string>;
@@ -270,6 +343,46 @@ function determineFieldType(formula: string): {
   else fieldType = 'calculated';
 
   return { fieldType, isTableCalc, lodType };
+}
+
+/**
+ * Every declared column across all real datasources, referenced or not.
+ * `rawFields` below is derived from formula references only, so it cannot see a
+ * column that nothing mentions; this pass is what makes an unused-field audit
+ * possible.
+ */
+function collectAllColumns(root: Element): WorkbookColumn[] {
+  const out: WorkbookColumn[] = [];
+  const seen = new Set<string>();
+  const datasources = root.getElementsByTagName('datasource');
+
+  for (let i = 0; i < datasources.length; i++) {
+    const ds = datasources[i];
+    const dsName = ds.getAttribute('caption') || ds.getAttribute('name') || 'Unknown';
+    if (dsName.toLowerCase() === 'parameters') continue;
+
+    for (const col of ownColumns(ds)) {
+      const internalName = col.getAttribute('name') || '';
+      if (!internalName) continue;
+      const caption = col.getAttribute('caption') || '';
+      const cleanInternal = internalName.replace(/^[[\]]+|[[\]]+$/g, '');
+      const key = `${dsName} ${cleanInternal.toLowerCase()}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+
+      out.push({
+        name: caption || cleanInternal,
+        internal_name: internalName,
+        datasource: dsName,
+        datatype: col.getAttribute('datatype') || '',
+        role: col.getAttribute('role') || '',
+        hidden: col.getAttribute('hidden') === 'true',
+        is_calculated: findChild(col, 'calculation') != null,
+      });
+    }
+  }
+
+  return out.sort((a, b) => a.datasource.localeCompare(b.datasource) || a.name.localeCompare(b.name));
 }
 
 // ── Phase 4: raw fields = referenced names that are neither calc nor param ────
@@ -327,38 +440,57 @@ export function extractFromXml(xmlString: string, fileLabel = 'Tableau Workbook'
     rawFields: [...s.rawFields].sort(),
     stats: computeStats(s),
     fileLabel,
+    allColumns: collectAllColumns(root),
   };
 }
 
-const MAX_TWB_BYTES = 250 * 1024 * 1024; // guardrail: DOMParser holds the whole tree in memory
+export const MAX_TWB_BYTES = 250 * 1024 * 1024; // guardrail: DOMParser holds the whole tree in memory
 
 /**
- * Full browser entry point: unzip a .twbx ArrayBuffer, find its .twb, and
- * extract lineage. Nothing is uploaded — this all runs locally.
+ * Unzip a .twbx and return its .twb XML as a string. Shared by every extractor
+ * so the size guard and the "skip the data extract" rule live in one place.
+ *
+ * The size limit is enforced from the ZIP central directory BEFORE decompressing,
+ * so an oversized entry is never allocated (a check after the fact cannot prevent
+ * the allocation it is guarding against).
  */
-export function extractFromTwbx(buffer: ArrayBuffer, filename = 'workbook.twbx'): ExtractResult {
+export function readTwbXml(buffer: ArrayBuffer): string {
   const bytes = new Uint8Array(buffer);
+  let oversized = false;
   let entries: Record<string, Uint8Array>;
   try {
-    // Only decompress .twb entries — skip the (often large) bundled data extract.
-    entries = unzipSync(bytes, { filter: (file) => file.name.toLowerCase().endsWith('.twb') });
+    entries = unzipSync(bytes, {
+      filter: (file) => {
+        if (!file.name.toLowerCase().endsWith('.twb')) return false;
+        if (file.originalSize > MAX_TWB_BYTES) {
+          oversized = true;
+          return false;
+        }
+        return true;
+      },
+    });
   } catch {
     throw new TableauExtractionError('This file is not a valid .twbx archive.');
   }
 
   const twbName = Object.keys(entries)[0];
   if (!twbName) {
+    if (oversized) {
+      throw new TableauExtractionError(
+        'This workbook is unusually large to parse in the browser. Try a smaller .twbx.',
+      );
+    }
     throw new TableauExtractionError('No .twb workbook was found inside the .twbx archive.');
   }
+  return strFromU8(entries[twbName]);
+}
 
-  const twbBytes = entries[twbName];
-  if (twbBytes.length > MAX_TWB_BYTES) {
-    throw new TableauExtractionError(
-      'This workbook is unusually large to parse in the browser. Try a smaller .twbx.',
-    );
-  }
-
-  const xml = strFromU8(twbBytes);
+/**
+ * Full browser entry point: unzip a .twbx ArrayBuffer, find its .twb, and
+ * extract lineage. Nothing is uploaded — this all runs locally.
+ */
+export function extractFromTwbx(buffer: ArrayBuffer, filename = 'workbook.twbx'): ExtractResult {
+  const xml = readTwbXml(buffer);
   const fileLabel = filename.replace(/\.twbx$/i, '').replace(/\.twb$/i, '');
   const result = extractFromXml(xml, fileLabel);
 

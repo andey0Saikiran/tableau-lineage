@@ -7,8 +7,7 @@
 // shows it), so results are deduplicated by (datasource, field, kind) with the
 // worksheet list aggregated.
 
-import { unzipSync } from 'fflate';
-import { TableauExtractionError } from './extractor';
+import { TableauExtractionError, readTwbXml } from './extractor';
 
 export type FilterKind = 'categorical' | 'quantitative' | 'relative-date' | string;
 
@@ -284,42 +283,9 @@ export function extractWorksheetsFromTwbx(
   );
 }
 
-function readTwbXml(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let entries: Record<string, Uint8Array>;
-  try {
-    entries = unzipSync(bytes, { filter: (file) => file.name.toLowerCase().endsWith('.twb') });
-  } catch {
-    throw new TableauExtractionError('This file is not a valid .twbx archive.');
-  }
-  const twbName = Object.keys(entries)[0];
-  if (!twbName) throw new TableauExtractionError('No .twb workbook was found inside the .twbx archive.');
-  const twbBytes = entries[twbName];
-  if (twbBytes.length > MAX_TWB_BYTES) {
-    throw new TableauExtractionError('This workbook is unusually large to parse. Try a smaller .twbx.');
-  }
-  return new TextDecoder('utf-8').decode(twbBytes);
-}
-
-const MAX_TWB_BYTES = 250 * 1024 * 1024;
-
 export function extractFiltersFromTwbx(
   buffer: ArrayBuffer,
   filename = 'workbook.twbx',
 ): FilterExtractResult {
-  const bytes = new Uint8Array(buffer);
-  let entries: Record<string, Uint8Array>;
-  try {
-    entries = unzipSync(bytes, { filter: (file) => file.name.toLowerCase().endsWith('.twb') });
-  } catch {
-    throw new TableauExtractionError('This file is not a valid .twbx archive.');
-  }
-  const twbName = Object.keys(entries)[0];
-  if (!twbName) throw new TableauExtractionError('No .twb workbook was found inside the .twbx archive.');
-  const twbBytes = entries[twbName];
-  if (twbBytes.length > MAX_TWB_BYTES) {
-    throw new TableauExtractionError('This workbook is unusually large to parse. Try a smaller .twbx.');
-  }
-  const xml = new TextDecoder('utf-8').decode(twbBytes);
-  return extractFiltersFromXml(xml, filename.replace(/\.twbx$/i, ''));
+  return extractFiltersFromXml(readTwbXml(buffer), filename.replace(/\.twbx$/i, ''));
 }
