@@ -1,7 +1,7 @@
 {
   "name": "tableau-lineage-mcp",
-  "version": "0.3.1",
-  "description": "MCP server that lets AI assistants read the lineage inside Tableau workbooks (.twbx/.twb): calculated-field dependencies, formulas, parameters, and stored SQL (Custom SQL, Initial SQL, stored procedures, RAWSQL). Runs 100% locally; the workbook never leaves your machine.",
+  "version": "1.0.0",
+  "description": "MCP server that lets AI assistants audit and read Tableau workbooks (.twbx/.twb): unused fields, duplicate calculations, performance findings, version diffs, calculated-field lineage, filters, dashboards and stored SQL. Runs 100% locally; the workbook never leaves your machine.",
   "type": "module",
   "license": "MIT",
   "homepage": "https://tableau-lineage.com",
@@ -32,7 +32,12 @@
     "calculated-fields",
     "business-intelligence",
     "claude",
-    "ai"
+    "ai",
+    "tableau-audit",
+    "workbook-audit",
+    "unused-fields",
+    "diff",
+    "data-documentation"
   ],
   "scripts": {
     "build": "tsc --noEmit && esbuild src/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/index.js",
