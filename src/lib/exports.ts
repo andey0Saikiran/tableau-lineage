@@ -88,8 +88,26 @@ export function downloadJson(bundle: AnalysisBundle): void {
   );
 }
 
-export function downloadCsv(result: ExtractResult): void {
-  const esc = (v: string) => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+/**
+ * Quote a CSV cell, neutralising spreadsheet formula injection.
+ *
+ * Field names and formulas come from a file the user did not necessarily write.
+ * Excel, Sheets and LibreOffice execute any cell beginning with = + - @ (or a
+ * leading tab/CR), so a hostile workbook could ship a calculation named
+ * `=cmd|'/c calc'!A1` and have it run when the export is opened. Prefixing with
+ * an apostrophe forces the cell to be read as text; the apostrophe is not part
+ * of the displayed value.
+ */
+function csvCell(v: string): string {
+  const s = String(v ?? '');
+  const risky = /^[=+\-@\t\r]/.test(s);
+  return '"' + (risky ? "'" + s : s).replace(/"/g, '""') + '"';
+}
+
+/** Split from the download so the escaping can be tested without a DOM. */
+export function buildCsv(bundle: AnalysisBundle): string {
+  const { result } = bundle;
+  const esc = csvCell;
   const fieldSheets = new Map<string, string[]>();
   for (const ws of result.worksheets ?? []) {
     for (const f of ws.fields) {
@@ -110,14 +128,31 @@ export function downloadCsv(result: ExtractResult): void {
       esc((fieldSheets.get(f.field_name) ?? []).join(', ')),
     ].join(','),
   );
-  const csv = '﻿' + [headers.join(','), ...rows].join('\r\n'); // BOM for Excel
-  triggerDownload(new Blob([csv], { type: 'text/csv;charset=utf-8' }), `${safeName(result.fileLabel)}-lineage.csv`);
+  return '﻿' + [headers.join(','), ...rows].join('\r\n'); // BOM for Excel
+}
+
+export function downloadCsv(bundle: AnalysisBundle): void {
+  triggerDownload(
+    new Blob([buildCsv(bundle)], { type: 'text/csv;charset=utf-8' }),
+    `${safeName(bundle.result.fileLabel)}-lineage.csv`,
+  );
 }
 
 // ── Markdown handover pack ────────────────────────────────────────────────────
 
 function mdEscape(s: string): string {
   return s.replace(/\|/g, '\\|');
+}
+
+/**
+ * Open a fence long enough to contain the text. A Tableau formula can legally
+ * contain three backticks inside a string literal or a comment, which would
+ * otherwise close the block early and spill the rest of the formula into the
+ * document as markup.
+ */
+function fenceFor(body: string): string {
+  const longest = (body.match(/`+/g) ?? []).reduce((n, run) => Math.max(n, run.length), 0);
+  return '`'.repeat(Math.max(3, longest + 1));
 }
 
 /**
@@ -277,9 +312,10 @@ export function buildMarkdown(bundle: AnalysisBundle): string {
     for (const f of fields) {
       L.push(`#### ${mdEscape(f.field_name)}`);
       L.push('');
-      L.push('```');
+      const fence = fenceFor(f.formula);
+      L.push(fence);
       L.push(f.formula);
-      L.push('```');
+      L.push(fence);
       L.push('');
       const deps = [...f.ingredients, ...f.parameter_dependencies];
       if (deps.length) L.push(`- Depends on: ${deps.map(mdEscape).join(', ')}`);
@@ -297,17 +333,19 @@ export function buildMarkdown(bundle: AnalysisBundle): string {
     for (const q of sql.custom_sql) {
       L.push(`### Custom SQL: ${mdEscape(q.relation_name)} (${mdEscape(q.datasource)})`);
       L.push('');
-      L.push('```sql');
+      const fence = fenceFor(q.sql);
+      L.push(fence + 'sql');
       L.push(q.sql);
-      L.push('```');
+      L.push(fence);
       L.push('');
     }
     for (const q of sql.initial_sql) {
       L.push(`### Initial SQL (${mdEscape(q.datasource)})`);
       L.push('');
-      L.push('```sql');
+      const fence = fenceFor(q.sql);
+      L.push(fence + 'sql');
       L.push(q.sql);
-      L.push('```');
+      L.push(fence);
       L.push('');
     }
     for (const p of sql.stored_procedures) {

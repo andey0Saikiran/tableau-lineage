@@ -9,7 +9,7 @@ import {
   extractProvenanceFromTwbx,
 } from '../src/lib/dashboardExtractor';
 import { auditWorkbook } from '../src/lib/audit';
-import { buildMarkdown, type AnalysisBundle } from '../src/lib/exports';
+import { buildMarkdown, buildCsv, type AnalysisBundle } from '../src/lib/exports';
 
 function bundleOf(file: string): AnalysisBundle {
   const abs = file.startsWith('/') ? file : path.join(__dirname, 'fixtures', file);
@@ -88,5 +88,67 @@ describe('markdown handover document', () => {
     expect(withSql).toContain('## Stored SQL');
     expect(withSql).toContain('```sql');
     expect(withSql).toContain('sp_monthly_sales');
+  });
+});
+
+describe('untrusted workbook content in exports', () => {
+  // Field names and formulas come from a file the user did not write, so both
+  // exports have to survive hostile content.
+
+  it('neutralises spreadsheet formula injection in CSV', () => {
+    const base = bundleOf(DEMO);
+    const csv = buildCsv({
+      ...base,
+      result: {
+        ...base.result,
+        fields: [
+          {
+            datasource: 'DS',
+            field_name: "=cmd|'/c calc'!A1",
+            formula: '+1+1',
+            ingredients: [],
+            parameter_dependencies: [],
+            field_type: 'calculated',
+            is_table_calc: false,
+            lod_type: null,
+          },
+        ],
+      },
+    });
+    // Dangerous leading characters must be quoted as text, not left to execute.
+    expect(csv).toContain(`"'=cmd|'/c calc'!A1"`);
+    expect(csv).toContain(`"'+1+1"`);
+    expect(csv).not.toMatch(/,"=cmd/);
+  });
+
+  it('does not let a formula break out of its markdown code fence', () => {
+    const base = bundleOf(DEMO);
+    const md = buildMarkdown({
+      ...base,
+      result: {
+        ...base.result,
+        fields: [
+          {
+            datasource: 'DS',
+            field_name: 'Sneaky',
+            // A formula that closes a 3-backtick fence and injects a heading.
+            formula: '``` \n# INJECTED HEADING\n```',
+            ingredients: [],
+            parameter_dependencies: [],
+            field_type: 'calculated',
+            is_table_calc: false,
+            lod_type: null,
+          },
+        ],
+      },
+    });
+    // The fence around it must be longer than any run of backticks inside.
+    expect(md).toContain('````');
+    const afterField = md.slice(md.indexOf('#### Sneaky'));
+    // The injected heading must sit inside a fence, never at document level.
+    const openFence = afterField.indexOf('````');
+    const injected = afterField.indexOf('# INJECTED HEADING');
+    expect(openFence).toBeGreaterThanOrEqual(0);
+    expect(injected).toBeGreaterThan(openFence);
   });
 });

@@ -31,7 +31,7 @@ export function ResultActions({ t, bundle, reportHtml, onReset, toast }: Props) 
         </button>
         <SecondaryButton
           onClick={() => {
-            downloadCsv(result);
+            downloadCsv(bundle);
             toast(t('csvDownloaded'), 'success');
           }}
           icon={<Table2 className="h-4 w-4" />}
