@@ -812,20 +812,30 @@
             if (view === 'graph') setTimeout(() => network.fit({ animation: true }), 100);
         }
 
+        // Same rules as the app's CSV export: field names and formulas come from
+        // the workbook, so every cell is quote-escaped, and any cell starting
+        // with = + - @ (or tab/CR) is forced to text so a hostile workbook
+        // cannot ship a calculation that executes when the CSV opens in Excel.
+        function csvCell(v) {
+            const s = String(v == null ? '' : v);
+            const risky = /^[=+\-@\t\r]/.test(s);
+            return '"' + (risky ? "'" + s : s).replace(/"/g, '""') + '"';
+        }
+
         function exportCSV() {
             const fieldSheets = {};
             worksheets.forEach(ws => (ws.fields || []).forEach(f => { (fieldSheets[f] = fieldSheets[f] || []).push(ws.name); }));
             const headers = ['Data Source', 'Field Name', 'Type', 'Formula', 'Field Dependencies', 'Parameter Dependencies', 'Used In Worksheets'];
             const rows = data.map(item => [
-                '"' + (item.datasource || '').replace(/"/g, '""') + '"',
-                '"' + (item.field_name || '').replace(/"/g, '""') + '"',
-                '"' + (item.field_type || '').replace(/"/g, '""') + '"',
-                '"' + (item.formula || '').replace(/"/g, '""') + '"',
-                '"' + (item.ingredients || []).join(', ') + '"',
-                '"' + (item.parameter_dependencies || []).join(', ') + '"',
-                '"' + (fieldSheets[item.field_name] || []).join(', ').replace(/"/g, '""') + '"'
+                csvCell(item.datasource),
+                csvCell(item.field_name),
+                csvCell(item.field_type),
+                csvCell(item.formula),
+                csvCell((item.ingredients || []).join(', ')),
+                csvCell((item.parameter_dependencies || []).join(', ')),
+                csvCell((fieldSheets[item.field_name] || []).join(', '))
             ]);
-            const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
+            const csv = '﻿' + [headers.join(','), ...rows.map(r => r.join(','))].join('\r\n');
             downloadBlob(new Blob([csv], { type: 'text/csv;charset=utf-8;' }), 'tableau_lineage.csv');
             toast('CSV exported');
         }

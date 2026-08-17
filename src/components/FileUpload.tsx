@@ -67,7 +67,7 @@ export function FileUpload({ t, status, error, onAnalyze, onClearError, onTryDem
         <p className="mx-auto mt-2 max-w-md text-sm text-muted">{t('uploadDescription')}</p>
 
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-border bg-white px-5 py-2.5 text-sm font-semibold text-ink shadow-sm transition-colors hover:border-brand-500 hover:text-brand-600 focus-within:border-brand-500">
+          <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl border border-border bg-white px-5 py-2.5 text-sm font-semibold text-ink shadow-sm transition-colors hover:border-brand-500 hover:text-brand-700 focus-within:border-brand-500">
             <FileText className="h-4 w-4" />
             {t('chooseFile')}
             <input
@@ -132,7 +132,7 @@ export function FileUpload({ t, status, error, onAnalyze, onClearError, onTryDem
               type="button"
               disabled={parsing}
               onClick={onTryDemo}
-              className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 underline-offset-2 hover:underline disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 text-sm font-semibold text-brand-700 underline-offset-2 hover:underline disabled:opacity-50"
             >
               <PlayCircle className="h-4 w-4" /> See it with a sample workbook
             </button>

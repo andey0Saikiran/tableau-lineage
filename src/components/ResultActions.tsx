@@ -80,7 +80,7 @@ function SecondaryButton({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2 text-sm font-semibold text-ink shadow-sm transition-colors hover:border-brand-500 hover:text-brand-600"
+      className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-4 py-2 text-sm font-semibold text-ink shadow-sm transition-colors hover:border-brand-500 hover:text-brand-700"
     >
       {icon} {label}
     </button>

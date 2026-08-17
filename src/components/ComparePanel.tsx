@@ -188,7 +188,7 @@ export function ComparePanel({ onCompare, steps, busy, error, onClose }: Props) 
             type="button"
             onClick={addSlot}
             disabled={files.length >= MAX_COMPARE_FILES}
-            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-brand-500 hover:text-brand-600 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-brand-500 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             <Plus className="h-3.5 w-3.5" /> Add another version
           </button>

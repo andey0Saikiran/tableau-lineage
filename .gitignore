@@ -10,3 +10,7 @@ yarn-error.log*
 
 # Workflow files need the gh "workflow" OAuth scope to push; add via GitHub web UI
 .github/workflows/
+
+# Agent/scratch test files must never be swept in by `git add -A`
+test/_*.test.ts
+test/**/_*.test.ts

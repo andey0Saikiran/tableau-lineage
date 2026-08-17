@@ -4,6 +4,7 @@ import path from 'node:path';
 import {
   extractDashboardsFromTwbx,
   extractProvenanceFromTwbx,
+  extractProvenanceFromXml,
 } from '../src/lib/dashboardExtractor';
 
 const DEMO = path.join(__dirname, '..', 'public', 'demo.twbx');
@@ -59,9 +60,27 @@ describe('provenance', () => {
     expect(provenance.datasources).toHaveLength(1);
   });
 
-  it('distinguishes extract from live', () => {
+  // This test previously asserted `true`, which encoded a bug rather than the
+  // truth: demo.twbx bundles a CSV and contains no <extract> element at all, so
+  // labelling it "Extract" told the reader the opposite of what the workbook
+  // does. A CSV or Excel connection is a live connection to a file.
+  it('does not call a packaged CSV an extract', () => {
     const { provenance } = load(DEMO);
-    expect(provenance.datasources[0].isExtract).toBe(true);
+    expect(provenance.datasources[0].isExtract).toBe(false);
+  });
+
+  it('treats a disabled extract as live', () => {
+    // Toggling "Use Extract" off leaves <extract enabled='false'> in the file
+    // while the workbook queries the source live.
+    const xml = `<?xml version='1.0' encoding='utf-8' ?>
+<workbook version='18.1'><datasources>
+  <datasource caption='DS' name='ds.a'>
+    <connection class='postgres' dbname='db' server='h' />
+    <extract enabled='false'><connection class='dataengine' /></extract>
+    <column caption='C' datatype='real' name='[c]' />
+  </datasource>
+</datasources></workbook>`;
+    expect(extractProvenanceFromXml(xml, 'x').datasources[0].isExtract).toBe(false);
   });
 
   it('reports connection class and database for live sources', () => {

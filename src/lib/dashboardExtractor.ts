@@ -72,6 +72,14 @@ function parseRoot(xmlString: string): Element {
   return root;
 }
 
+/** True when `el` sits inside a `<tag>` element at or below `stopAt`. */
+function isInside(el: Element, stopAt: Element, tag: string): boolean {
+  for (let p = el.parentNode as Element | null; p && p !== stopAt; p = p.parentNode as Element | null) {
+    if (p.nodeType === 1 && p.tagName?.toLowerCase() === tag) return true;
+  }
+  return false;
+}
+
 function attrNum(el: Element, name: string): number | null {
   const v = el.getAttribute(name);
   if (v == null) return null;
@@ -172,8 +180,17 @@ export function extractDashboardsFromTwbx(
 
 // ── Provenance ────────────────────────────────────────────────────────────────
 
-/** Connection classes that mean "this workbook carries its own extracted data". */
-const EXTRACT_CLASSES = new Set(['hyper', 'dataengine', 'tde', 'excel-direct', 'textscan']);
+/**
+ * Connection classes that ARE a Tableau extract.
+ *
+ * Deliberately excludes `textscan` and `excel-direct`. Those are live
+ * connections to a file (a CSV or a workbook on disk), not extracted data, and
+ * counting them made the site's own demo workbook report "Extract" when its
+ * .twbx contains a CSV and no <extract> element at all. The distinction is the
+ * whole point of the label: an extract is a snapshot with a refresh date, a
+ * file connection is read live every time.
+ */
+const EXTRACT_CLASSES = new Set(['hyper', 'dataengine', 'tde', 'sqlproxy-extract']);
 
 export function extractProvenanceFromXml(
   xmlString: string,
@@ -196,6 +213,10 @@ export function extractProvenanceFromXml(
       const cls = connEls[c].getAttribute('class') || '';
       // 'federated' is a wrapper around the real connections beneath it.
       if (!cls || cls === 'federated') continue;
+      // An <extract> carries its own engine connection. That describes the
+      // extract, not where the data source points, and counting it made a
+      // disabled extract look like an active one.
+      if (isInside(connEls[c], ds, 'extract')) continue;
       const server = connEls[c].getAttribute('server') || null;
       const dbname = connEls[c].getAttribute('dbname') || null;
       const key = `${cls}|${server}|${dbname}`;
@@ -210,9 +231,16 @@ export function extractProvenanceFromXml(
       });
     }
 
+    // An <extract> element is not enough on its own: toggling "Use Extract" off
+    // leaves the element in the file with enabled='false', and the workbook then
+    // queries the source live. Labelling that "Extract" tells the reader the
+    // opposite of what the workbook does.
+    const extractEls = ds.getElementsByTagName('extract');
+    const hasEnabledExtract = Array.from(extractEls).some(
+      (e) => e.getAttribute('enabled') !== 'false',
+    );
     const isExtract =
-      ds.getElementsByTagName('extract').length > 0 ||
-      connections.some((c) => EXTRACT_CLASSES.has(c.class));
+      hasEnabledExtract || connections.some((c) => EXTRACT_CLASSES.has(c.class));
 
     // Refresh history is optional: many workbooks carry none at all. Read it if
     // present, report null otherwise, and never infer freshness from silence.

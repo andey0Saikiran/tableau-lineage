@@ -174,7 +174,7 @@ export default function App() {
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-bold text-ink">Works with Claude and Cursor via MCP</p>
                   <p className="text-xs text-muted">
-                    Let your AI assistant read workbooks on your machine: 9 tools, nothing uploaded.
+                    Let your AI assistant audit and read workbooks on your machine: 11 tools, nothing uploaded.
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">

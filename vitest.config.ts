@@ -8,5 +8,9 @@ export default defineConfig({
     environment: 'node',
     setupFiles: ['./test/setup.ts'],
     include: ['test/**/*.test.ts'],
+    // Underscore-prefixed files are scratch/experiment files (also gitignored).
+    // Excluding them keeps the reported test count honest: a stray scratch file
+    // once inflated the suite from 53 to 57 and was committed in a release.
+    exclude: ['test/**/_*.test.ts', 'node_modules/**'],
   },
 });

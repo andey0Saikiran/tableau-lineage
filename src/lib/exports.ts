@@ -140,8 +140,18 @@ export function downloadCsv(bundle: AnalysisBundle): void {
 
 // ── Markdown handover pack ────────────────────────────────────────────────────
 
+/**
+ * Make a value safe inside a Markdown table cell.
+ *
+ * Pipes end the cell, and a newline ends the ROW: a field caption containing a
+ * line break split the table and let the rest of the caption render as
+ * document-level markup. Both are collapsed rather than escaped, since a table
+ * cell cannot contain a real line break anyway.
+ */
 function mdEscape(s: string): string {
-  return s.replace(/\|/g, '\\|');
+  return String(s ?? '')
+    .replace(/\r?\n|\r/g, ' ')
+    .replace(/\|/g, '\\|');
 }
 
 /**

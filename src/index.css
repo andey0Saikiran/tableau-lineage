@@ -10,7 +10,10 @@
   --muted: #475569;
   --brand: #0ea5e9;
   --leaf: #22c55e;
-  --focus: rgba(14, 165, 233, 0.5);
+  /* Solid brand-600, not a 50%-alpha brand-500. The translucent ring measured
+     1.67:1 against the white surfaces it lands on, well under the 3:1 WCAG
+     requires for a non-text indicator, so keyboard focus was barely visible. */
+  --focus: #0284c7;
 }
 
 @layer base {

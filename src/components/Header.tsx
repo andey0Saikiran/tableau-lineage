@@ -36,7 +36,7 @@ export function Header({ t, language, onLanguage, onFeatures, onAbout, onPrivacy
             target="_blank"
             rel="noopener noreferrer"
             title={`Built by ${CREATOR.name} — connect on LinkedIn`}
-            className="hidden items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-muted transition-colors hover:bg-brand-50 hover:text-brand-600 md:inline-flex"
+            className="hidden items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-muted transition-colors hover:bg-brand-50 hover:text-brand-700 md:inline-flex"
           >
             <Linkedin className="h-4 w-4" />
             <span className="hidden lg:inline">by {CREATOR.name}</span>
@@ -44,7 +44,7 @@ export function Header({ t, language, onLanguage, onFeatures, onAbout, onPrivacy
           <button
             type="button"
             onClick={onFeatures}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-brand-50 hover:text-brand-600"
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-brand-50 hover:text-brand-700"
           >
             <Sparkles className="h-4 w-4" />
             <span className="hidden sm:inline">{t('featuresTitle')}</span>
@@ -52,14 +52,14 @@ export function Header({ t, language, onLanguage, onFeatures, onAbout, onPrivacy
           <button
             type="button"
             onClick={onAbout}
-            className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-brand-50 hover:text-brand-600 sm:inline-flex"
+            className="hidden items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-brand-50 hover:text-brand-700 sm:inline-flex"
           >
             <Info className="h-4 w-4" /> {t('aboutTitle')}
           </button>
           <button
             type="button"
             onClick={onPrivacy}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-brand-50 hover:text-brand-600"
+            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-brand-50 hover:text-brand-700"
           >
             <ShieldCheck className="h-4 w-4" />
             <span className="hidden sm:inline">{t('privacyTitle')}</span>
@@ -69,7 +69,7 @@ export function Header({ t, language, onLanguage, onFeatures, onAbout, onPrivacy
             target="_blank"
             rel="noopener noreferrer"
             aria-label="View source on GitHub"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-brand-50 hover:text-brand-600"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-muted transition-colors hover:bg-brand-50 hover:text-brand-700"
           >
             <Github className="h-[18px] w-[18px]" />
           </a>

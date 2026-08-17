@@ -54,6 +54,12 @@ export interface FilterChange {
   after: string | null;
 }
 
+export interface WorksheetChange {
+  name: string;
+  addedFields: string[];
+  removedFields: string[];
+}
+
 export interface DashboardChange {
   name: string;
   addedSheets: string[];
@@ -86,7 +92,7 @@ export interface WorkbookDiff {
     removed: FilterChange[];
     changed: FilterChange[];
   };
-  worksheets: { added: string[]; removed: string[] };
+  worksheets: { added: string[]; removed: string[]; changed: WorksheetChange[] };
   dashboards: { added: string[]; removed: string[]; changed: DashboardChange[] };
   datasources: { added: string[]; removed: string[]; changed: DatasourceChange[] };
   sql: { added: string[]; removed: string[]; changed: string[] };
@@ -203,7 +209,11 @@ export function diffWorkbooks(before: WorkbookSnapshot, after: WorkbookSnapshot)
     const f = addedCalcs[i];
     const sig = formulaSignature(f.formula);
     const match = removedBySig.get(sig);
-    if (match && f.formula.trim()) {
+    // Same field name means the *data source* was renamed, not the field. The
+    // key includes the data source, so renaming one turns every calculation in
+    // it into a removal plus an addition, which then paired up into a wall of
+    // meaningless "X renamed to X" lines.
+    if (match && f.formula.trim() && norm(match.field_name) !== norm(f.field_name)) {
       renamed.push({
         beforeName: match.field_name,
         afterName: f.field_name,
@@ -222,11 +232,27 @@ export function diffWorkbooks(before: WorkbookSnapshot, after: WorkbookSnapshot)
   const addedParams: Parameter[] = [];
   const removedParams: Parameter[] = [];
   const valueChanged: ParamChange[] = [];
+  const allowedList = (p: Parameter) =>
+    (p.allowed_values ?? []).map((v) => v.alias ?? v.value).join(', ');
   for (const [k, p] of afterParams) {
     const prev = beforeParams.get(k);
-    if (!prev) addedParams.push(p);
-    else if (prev.value !== p.value) {
+    if (!prev) {
+      addedParams.push(p);
+      continue;
+    }
+    if (prev.value !== p.value) {
       valueChanged.push({ name: p.name, before: prev.value, after: p.value });
+    }
+    // Editing the option list of a list parameter changes what users can pick,
+    // which was previously invisible to the diff.
+    const beforeAllowed = allowedList(prev);
+    const afterAllowed = allowedList(p);
+    if (beforeAllowed !== afterAllowed) {
+      valueChanged.push({
+        name: `${p.name} (options)`,
+        before: beforeAllowed || '(any)',
+        after: afterAllowed || '(any)',
+      });
     }
   }
   for (const [k, p] of beforeParams) if (!afterParams.has(k)) removedParams.push(p);
@@ -248,11 +274,23 @@ export function diffWorkbooks(before: WorkbookSnapshot, after: WorkbookSnapshot)
     if (!afterFilters.has(k)) removedFilters.push({ ...f, before: f.after, after: null });
   }
 
-  // Worksheets.
-  const beforeSheets = new Set((before.result.worksheets ?? []).map((w) => w.name));
-  const afterSheets = new Set((after.result.worksheets ?? []).map((w) => w.name));
-  const addedSheets = [...afterSheets].filter((n) => !beforeSheets.has(n)).sort();
-  const removedSheets = [...beforeSheets].filter((n) => !afterSheets.has(n)).sort();
+  // Worksheets: existence AND content. Comparing only the set of names reported
+  // "no semantic differences" when a field was added to an existing sheet, which
+  // is one of the most common real edits there is.
+  const beforeWs = new Map((before.result.worksheets ?? []).map((w) => [w.name, w]));
+  const afterWs = new Map((after.result.worksheets ?? []).map((w) => [w.name, w]));
+  const addedSheets = [...afterWs.keys()].filter((n) => !beforeWs.has(n)).sort();
+  const removedSheets = [...beforeWs.keys()].filter((n) => !afterWs.has(n)).sort();
+  const changedSheets: WorksheetChange[] = [];
+  for (const [name, w] of afterWs) {
+    const prev = beforeWs.get(name);
+    if (!prev) continue;
+    const addedFields = w.fields.filter((f) => !prev.fields.includes(f));
+    const removedFields = prev.fields.filter((f) => !w.fields.includes(f));
+    if (addedFields.length || removedFields.length) {
+      changedSheets.push({ name, addedFields, removedFields });
+    }
+  }
 
   // Dashboards, including which sheets moved on or off them.
   const beforeDash = new Map((before.dashboards?.dashboards ?? []).map((d) => [d.name, d]));
@@ -325,6 +363,7 @@ export function diffWorkbooks(before: WorkbookSnapshot, after: WorkbookSnapshot)
     changedFilters.length +
     addedSheets.length +
     removedSheets.length +
+    changedSheets.length +
     addedDash.length +
     removedDash.length +
     changedDash.length +
@@ -357,7 +396,7 @@ export function diffWorkbooks(before: WorkbookSnapshot, after: WorkbookSnapshot)
     calculations: { added: addedCalcs, removed: removedCalcs, modified, renamed },
     parameters: { added: addedParams, removed: removedParams, valueChanged },
     filters: { added: addedFilters, removed: removedFilters, changed: changedFilters },
-    worksheets: { added: addedSheets, removed: removedSheets },
+    worksheets: { added: addedSheets, removed: removedSheets, changed: changedSheets },
     dashboards: { added: addedDash, removed: removedDash, changed: changedDash },
     datasources: { added: addedDs, removed: removedDs, changed: changedDs },
     sql: { added: addedSql, removed: removedSql, changed: changedSql },

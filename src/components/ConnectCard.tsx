@@ -30,7 +30,7 @@ export function ConnectCard() {
           href={REPO_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-brand-500 hover:text-brand-600"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-semibold text-ink transition-colors hover:border-brand-500 hover:text-brand-700"
         >
           <Star className="h-3.5 w-3.5" /> Star on GitHub
         </a>
@@ -38,7 +38,7 @@ export function ConnectCard() {
           href={`${REPO_URL}/issues/new`}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-brand-500 hover:text-brand-600"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-white px-3 py-1.5 text-xs font-semibold text-muted transition-colors hover:border-brand-500 hover:text-brand-700"
         >
           <MessageSquare className="h-3.5 w-3.5" /> Report an issue
         </a>

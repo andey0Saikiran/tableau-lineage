@@ -38,10 +38,10 @@ promise (there is no server to send it to).
   prove a field is unreferenced everywhere.
 - **Duplicate calculations**: identical formulas under different names, and the more
   dangerous case of the same name carrying different formulas.
-- **Performance lint**: ~15 static rules over what the file actually contains. Heavy and
-  nested LODs, long calculations, string-heavy work, "only relevant values" filters, too
-  many quick filters, missing context filters, live connections, non-fixed dashboard
-  sizing, dense dashboards, orphan worksheets.
+- **Performance lint**: 15 static rules over what the file actually contains. Heavy and
+  nested LODs, long calculations, string-heavy work, too many quick filters, missing
+  context filters, live connections, non-fixed dashboard sizing, dense dashboards,
+  orphan worksheets.
 
 ### Lineage
 
@@ -99,7 +99,8 @@ All generated in-browser, from the same parsed model:
   extract is never touched.
 - **Accessible**: keyboard navigation, focus management, AA contrast, reduced-motion
   support, and a text dictionary as an equivalent to the canvas graph.
-- **Seven UI languages** with English fallback.
+- **Seven UI languages** for the core interface strings (buttons, labels, status
+  messages), with English fallback. Longer explanatory copy is English only.
 
 ## How it works
 

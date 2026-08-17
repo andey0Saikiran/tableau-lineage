@@ -26,7 +26,7 @@ function CopyButton({ text, toast }: { text: string; toast: Props['toast'] }) {
           .then(() => toast('SQL copied to clipboard', 'success'))
           .catch(() => toast('Could not copy', 'error'));
       }}
-      className="inline-flex items-center gap-1 rounded-md border border-border bg-white px-2 py-1 text-[11px] font-semibold text-muted transition-colors hover:border-brand-500 hover:text-brand-600"
+      className="inline-flex items-center gap-1 rounded-md border border-border bg-white px-2 py-1 text-[11px] font-semibold text-muted transition-colors hover:border-brand-500 hover:text-brand-700"
     >
       <Copy className="h-3 w-3" /> Copy
     </button>

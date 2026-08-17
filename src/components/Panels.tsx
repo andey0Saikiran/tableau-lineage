@@ -12,7 +12,7 @@ interface PanelProps {
 function Step({ n, title, body }: { n: number; title: string; body: string }) {
   return (
     <li className="flex gap-3">
-      <span className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-full bg-brand-50 text-sm font-bold text-brand-600">
+      <span className="grid h-7 w-7 flex-shrink-0 place-items-center rounded-full bg-brand-50 text-sm font-bold text-brand-700">
         {n}
       </span>
       <span>
@@ -58,7 +58,7 @@ export function AboutPanel({ open, onClose, t }: PanelProps) {
           href={REPO_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 hover:text-brand-700"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 hover:text-brand-700"
         >
           View the source on GitHub →
         </a>
@@ -99,7 +99,7 @@ export function PrivacyPanel({ open, onClose, t }: PanelProps) {
           href={REPO_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 hover:text-brand-700"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 hover:text-brand-700"
         >
           Verify it yourself on GitHub →
         </a>
@@ -150,7 +150,7 @@ export function FeaturesPanel({ open, onClose, t }: PanelProps) {
           items={[
             <>{b('Dead weight')}: every field and parameter nothing uses, graded by confidence with the reason spelled out. Candidates to review, not a blind delete list.</>,
             <>{b('Duplicate calculations')}: identical formulas under different names, and the riskier case of one name carrying different formulas.</>,
-            <>{b('Performance lint')}: around 15 rules over what the file contains. Heavy and nested LODs, long calculations, only-relevant-values filters, missing context filters, live connections, non-fixed dashboard sizing and more, each with a fix.</>,
+            <>{b('Performance lint')}: 15 rules over what the file contains. Heavy and nested LODs, long calculations, string-heavy work, too many quick filters, missing context filters, live connections, non-fixed dashboard sizing and dense dashboards, each with a fix.</>,
           ]}
         />
 
@@ -224,7 +224,7 @@ export function FeaturesPanel({ open, onClose, t }: PanelProps) {
           title="Practical"
           items={[
             <>Workbooks up to {b('500 MB')} (only the workbook XML is ever decompressed).</>,
-            <>{b('Seven interface languages')}, keyboard navigation, AA contrast, reduced-motion support.</>,
+            <>{b('Seven interface languages')} for the core interface strings, keyboard navigation, AA contrast, reduced-motion support.</>,
             <>{b('Free and open source')}: no account, no cookies, verifiable code.</>,
           ]}
         />
@@ -233,7 +233,7 @@ export function FeaturesPanel({ open, onClose, t }: PanelProps) {
           href={REPO_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 hover:text-brand-700"
+          className="inline-flex items-center gap-2 text-sm font-semibold text-brand-700 hover:text-brand-700"
         >
           Explore the code on GitHub →
         </a>

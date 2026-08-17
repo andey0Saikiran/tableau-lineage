@@ -13,7 +13,7 @@ function PersonLinks({ person }: { person: Person }) {
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`${person.name} on LinkedIn`}
-          className="text-muted transition-colors hover:text-brand-600"
+          className="text-muted transition-colors hover:text-brand-700"
         >
           <Linkedin className="h-4 w-4" />
         </a>
@@ -24,7 +24,7 @@ function PersonLinks({ person }: { person: Person }) {
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`${person.name} on GitHub`}
-          className="text-muted transition-colors hover:text-brand-600"
+          className="text-muted transition-colors hover:text-brand-700"
         >
           <Github className="h-4 w-4" />
         </a>
@@ -51,7 +51,7 @@ export function Footer({ t }: { t: (k: TranslationKey) => string }) {
               href={CREATOR.linkedin}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 font-bold text-ink transition-colors hover:bg-brand-50 hover:text-brand-600"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 font-bold text-ink transition-colors hover:bg-brand-50 hover:text-brand-700"
             >
               {CREATOR.name}
               <Linkedin className="h-4 w-4 text-brand-600" />
@@ -71,7 +71,7 @@ export function Footer({ t }: { t: (k: TranslationKey) => string }) {
               href={REPO_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-brand-600"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-brand-700"
             >
               <Github className="h-4 w-4" /> Open source on GitHub
             </a>
@@ -79,7 +79,7 @@ export function Footer({ t }: { t: (k: TranslationKey) => string }) {
               href={`${REPO_URL}/tree/main/mcp`}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-brand-600"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-muted transition-colors hover:text-brand-700"
             >
               <Terminal className="h-4 w-4" /> MCP server for AI assistants
             </a>

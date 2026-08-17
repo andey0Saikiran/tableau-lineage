@@ -200,16 +200,33 @@ function findDeadWeight(input: AuditInput): {
   }
 
   // Parameters.
+  //
+  // A parameter is unreachable either because nothing references it at all, or
+  // because everything that references it is itself unused. Those are different
+  // facts and the second one is the common case, so say which. Reporting "not
+  // used by any calculation" for a parameter that four live calculations
+  // reference is simply false, and it hides the more useful finding: the whole
+  // chain is dead and can go together.
   for (const p of result.parameters) {
     const k = norm(p.name);
     if (reachable.has(k)) continue;
+    const usedBy = result.fields
+      .filter((f) => f.parameter_dependencies.some((d) => norm(d) === k))
+      .map((f) => f.field_name);
+    const chain =
+      usedBy.length > 0
+        ? `Referenced only by ${usedBy.slice(0, 3).map((n) => `"${n}"`).join(', ')}` +
+          `${usedBy.length > 3 ? ` and ${usedBy.length - 3} more` : ''}, ` +
+          `${usedBy.length === 1 ? 'which is itself unused' : 'which are themselves unused'}, ` +
+          'so the whole chain is dead weight.'
+        : 'Nothing in the workbook references this parameter.';
     dead.push({
       name: p.name,
       datasource: 'Parameters',
       kind: 'parameter',
       confidence: 'likely-unused',
       reason:
-        'Not used by any calculation, filter, or worksheet. Parameters can also be wired to dashboard actions, which are not inspected, so confirm before deleting.',
+        `${chain} Parameters can also be wired to dashboard actions, which are not inspected, so confirm before deleting.`,
       hidden: false,
     });
   }
