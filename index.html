@@ -53,11 +53,26 @@
         "description": "A privacy-first web app that visualizes the field-level lineage, calculated-field dependencies, stored SQL (Custom SQL, Initial SQL, stored procedures), and metadata inside any Tableau workbook (.twbx), entirely in your browser. Nothing is uploaded.",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
         "isAccessibleForFree": true,
-        "creator": {
-          "@type": "Person",
-          "name": "Sai Kiran Andey",
-          "url": "https://www.linkedin.com/in/andeysaikiran/"
-        }
+        "creator": { "@id": "https://tableau-lineage.com/#author" },
+        "author": { "@id": "https://tableau-lineage.com/#author" }
+      }
+    </script>
+
+    <!-- Author identity. sameAs links the tool to a real person across profiles,
+         which is how search engines attribute authorship. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "@id": "https://tableau-lineage.com/#author",
+        "name": "Sai Kiran Andey",
+        "url": "https://tableau-lineage.com/",
+        "jobTitle": "Data Scientist",
+        "sameAs": [
+          "https://www.linkedin.com/in/andeysaikiran/",
+          "https://github.com/andey0Saikiran",
+          "https://medium.com/@saiki.andey"
+        ]
       }
     </script>
 

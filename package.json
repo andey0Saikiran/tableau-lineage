@@ -34,5 +34,10 @@
     "typescript": "^5.7.2",
     "vite": "^6.0.5",
     "vitest": "^4.1.10"
+  },
+  "author": "Sai Kiran Andey (https://www.linkedin.com/in/andeysaikiran/)",
+  "funding": {
+    "type": "individual",
+    "url": "https://www.linkedin.com/in/andeysaikiran/"
   }
 }

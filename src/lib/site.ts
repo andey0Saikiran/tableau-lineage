@@ -1,9 +1,9 @@
-// Single source of truth for outbound links & credits.
-// Update REPO_URL once you create the GitHub repo, and add Mourya's LinkedIn
-// when available (leave `linkedin` undefined to render the name without a link).
+// Single source of truth for outbound links and credits.
+// CONTRIBUTORS is intentionally empty: this is a solo project.
 
 export const SITE_URL = 'https://tableau-lineage.com';
 export const REPO_URL = 'https://github.com/andey0Saikiran/tableau-lineage';
+export const NPM_URL = 'https://www.npmjs.com/package/tableau-lineage-mcp';
 
 export interface Person {
   name: string;

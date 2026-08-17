@@ -197,8 +197,11 @@
             border: 1px solid var(--border); border-radius: 999px; padding: 5px 14px;
             box-shadow: var(--shadow-sm); text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
         }
-        .watermark:hover { color: var(--primary); }
+        .watermark a { color: inherit; text-decoration: none; }
+        .watermark a:hover { color: var(--primary); }
+        .watermark a:hover b { text-decoration: underline; }
         .watermark b { color: var(--primary); font-weight: 700; }
+        .watermark-sep { opacity: 0.45; }
 
         @media (max-width: 760px) {
             .legend-panel { display: none; }
@@ -304,9 +307,17 @@
         </div>
     </main>
 
-    <a class="watermark" href="https://tableau-lineage.com" target="_blank" rel="noopener noreferrer">
-        Generated with <b>tableau-lineage.com</b>
-    </a>
+    <!-- These reports get shared and emailed on their own, so the credit travels
+         with the file: the tool that made it and the person who built it. -->
+    <div class="watermark">
+        <a href="https://tableau-lineage.com" target="_blank" rel="noopener noreferrer">
+            Generated with <b>tableau-lineage.com</b>
+        </a>
+        <span class="watermark-sep" aria-hidden="true">·</span>
+        <a href="https://www.linkedin.com/in/andeysaikiran/" target="_blank" rel="noopener noreferrer">
+            Built by <b>Sai Kiran Andey</b>
+        </a>
+    </div>
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script>

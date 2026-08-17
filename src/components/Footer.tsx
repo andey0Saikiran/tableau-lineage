@@ -43,12 +43,22 @@ export function Footer({ t }: { t: (k: TranslationKey) => string }) {
             {t('privacyInline')}
           </p>
 
-          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 text-sm text-muted">
-            <span>{t('madeBy')}</span>
-            <PersonLinks person={CREATOR} />
+          {/* Real, tappable links at readable contrast: this used to be muted
+              grey text with a 16px icon, which nobody noticed or clicked. */}
+          <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 text-sm">
+            <span className="text-muted">{t('madeBy')}</span>
+            <a
+              href={CREATOR.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 rounded-lg px-2 py-1 font-bold text-ink transition-colors hover:bg-brand-50 hover:text-brand-600"
+            >
+              {CREATOR.name}
+              <Linkedin className="h-4 w-4 text-brand-600" />
+            </a>
             {CONTRIBUTORS.length > 0 && (
               <>
-                <span>{t('contributors')}</span>
+                <span className="text-muted">{t('contributors')}</span>
                 {CONTRIBUTORS.map((c) => (
                   <PersonLinks key={c.name} person={c} />
                 ))}

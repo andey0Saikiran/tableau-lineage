@@ -3,6 +3,7 @@ import { FileUp, Cpu, Share2, Terminal, Copy } from 'lucide-react';
 import { Header } from './components/Header';
 import { AnnouncementBar } from './components/AnnouncementBar';
 import { Footer } from './components/Footer';
+import { ConnectCard } from './components/ConnectCard';
 
 // Result panels only exist after a workbook is analysed, so they are split out
 // of the landing-page bundle. Keeping the entry chunk small is a hard budget:
@@ -240,6 +241,8 @@ export default function App() {
             </Suspense>
 
             <VisualizerFrame ref={iframeRef} html={reportHtml} title={`${result.fileLabel} — lineage`} />
+
+            <ConnectCard />
           </section>
         )}
       </main>

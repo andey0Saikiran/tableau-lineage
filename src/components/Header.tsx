@@ -1,8 +1,8 @@
 import { Info, ShieldCheck, Sparkles } from 'lucide-react';
-import { Github } from './BrandIcons';
+import { Github, Linkedin } from './BrandIcons';
 import { Logo } from './Logo';
 import { LanguageSelector } from './LanguageSelector';
-import { REPO_URL } from '../lib/site';
+import { REPO_URL, CREATOR } from '../lib/site';
 import type { Language, TranslationKey } from '../lib/i18n';
 
 interface Props {
@@ -29,6 +29,18 @@ export function Header({ t, language, onLanguage, onFeatures, onAbout, onPrivacy
         </a>
 
         <nav className="flex animate-slide-in-right items-center gap-1.5 sm:gap-2" aria-label="Primary">
+          {/* Persistent credit: the footer alone is never seen by someone who
+              drops a file, gets their answer, and leaves. */}
+          <a
+            href={CREATOR.linkedin}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`Built by ${CREATOR.name} — connect on LinkedIn`}
+            className="hidden items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-muted transition-colors hover:bg-brand-50 hover:text-brand-600 md:inline-flex"
+          >
+            <Linkedin className="h-4 w-4" />
+            <span className="hidden lg:inline">by {CREATOR.name}</span>
+          </a>
           <button
             type="button"
             onClick={onFeatures}
