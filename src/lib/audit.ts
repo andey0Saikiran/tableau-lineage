@@ -220,7 +220,7 @@ function findDeadWeight(input: AuditInput): {
 // ── Duplicate calculations ────────────────────────────────────────────────────
 
 /** Formula reduced to a comparison key: case, whitespace and brackets ignored. */
-function formulaSignature(formula: string): string {
+export function formulaSignature(formula: string): string {
   return formula
     .replace(/\s+/g, ' ')
     .replace(/\s*([(),*/+\-<>=])\s*/g, '$1')

@@ -65,8 +65,8 @@ try {
   const tools = await rpc('tools/list', {});
   const names = tools.tools.map((t) => t.name).sort();
   check(
-    'exposes all 9 tools',
-    ['analyze_workbook', 'get_field', 'get_lineage_graph', 'list_calculated_fields', 'list_filters', 'list_parameters', 'list_sql_queries', 'list_worksheets', 'trace_dependencies']
+    'exposes all 10 tools',
+    ['analyze_workbook', 'diff_workbooks', 'get_field', 'get_lineage_graph', 'list_calculated_fields', 'list_filters', 'list_parameters', 'list_sql_queries', 'list_worksheets', 'trace_dependencies']
       .every((n) => names.includes(n)),
     names.join(', '),
   );
@@ -154,6 +154,18 @@ try {
     pubWs.worksheets?.[0]?.fields?.includes('Attainment Ratio')
     && !pubWs.worksheets?.[0]?.fields?.some((x) => /^Calculation_\d+/.test(x)),
     pubWs.worksheets?.[0]?.fields?.join(', '));
+
+  // ── Diff ────────────────────────────────────────────────────────────────────
+  const v2Fixture = path.join(here, '..', '..', 'test', 'fixtures', 'custom-sql-v2.twbx');
+  const d = jsonOf(await rpc('tools/call', { name: 'diff_workbooks', arguments: { before: sqlFixture, after: v2Fixture } }));
+  check('diff finds the changed formula with its blast radius',
+    d.calculations?.modified?.some((m) => m.name === 'Amount With Tax' && m.impact.includes('Margin Pct')),
+    d.headline?.[0]);
+  check('diff reports a rename instead of add plus remove',
+    d.calculations?.renamed?.some((r) => r.afterName === 'Regional Revenue')
+    && !d.calculations?.added?.some((f) => f.field_name === 'Regional Revenue'));
+  const same = jsonOf(await rpc('tools/call', { name: 'diff_workbooks', arguments: { before: sqlFixture, after: sqlFixture } }));
+  check('diffing a workbook against itself reports no changes', same.identical === true && same.totalChanges === 0);
 
   const missing = await rpc('tools/call', { name: 'get_field', arguments: { path: demoTwbx, field: 'No Such Field Xyz' } });
   check('unknown field returns a clean error', missing.isError === true, textOf(missing).slice(0, 60));

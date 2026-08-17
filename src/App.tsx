@@ -18,6 +18,9 @@ const AuditPanel = lazy(() =>
 const StructurePanel = lazy(() =>
   import('./components/StructurePanel').then((m) => ({ default: m.StructurePanel })),
 );
+const ComparePanel = lazy(() =>
+  import('./components/ComparePanel').then((m) => ({ default: m.ComparePanel })),
+);
 import { FileUpload } from './components/FileUpload';
 import { LandingCopy } from './components/LandingCopy';
 import { StatsGrid, type HighlightType } from './components/StatsGrid';
@@ -28,6 +31,7 @@ import { AboutPanel, PrivacyPanel, FeaturesPanel } from './components/Panels';
 import { BackgroundEffects } from './components/BackgroundEffects';
 import { useToast } from './components/Toast';
 import { useWorkbook } from './hooks/useWorkbook';
+import { useCompare } from './hooks/useCompare';
 import { makeT, type Language } from './lib/i18n';
 import { trackEvent } from './lib/analytics';
 
@@ -39,6 +43,7 @@ export default function App() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [featuresOpen, setFeaturesOpen] = useState(false);
   const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [compareOpen, setCompareOpen] = useState(false);
   const [selectedType, setSelectedType] = useState<HighlightType | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -48,6 +53,7 @@ export default function App() {
     status, result, sql, filters, audit, dashboards, provenance,
     reportHtml, error, analyze, reset, clearError,
   } = useWorkbook();
+  const { diff, busy: comparing, error: compareError, compare, resetCompare } = useCompare();
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -116,13 +122,30 @@ export default function App() {
         t={t}
         language={language}
         onLanguage={setLanguage}
+        onCompare={() => setCompareOpen(true)}
         onFeatures={() => setFeaturesOpen(true)}
         onAbout={() => setAboutOpen(true)}
         onPrivacy={() => setPrivacyOpen(true)}
       />
 
       <main className="relative z-10 flex-1">
-        {!showResults ? (
+        {compareOpen ? (
+          <Suspense fallback={null}>
+            <ComparePanel
+              onCompare={(b, a) => {
+                trackEvent('compare');
+                compare(b, a);
+              }}
+              diff={diff}
+              busy={comparing}
+              error={compareError}
+              onClose={() => {
+                setCompareOpen(false);
+                resetCompare();
+              }}
+            />
+          </Suspense>
+        ) : !showResults ? (
           <>
           <section className="mx-auto grid max-w-6xl items-center gap-8 px-5 py-8 lg:min-h-[calc(100vh-65px)] lg:grid-cols-2 lg:gap-14 lg:py-0">
             <LandingCopy />

@@ -24,6 +24,13 @@ import {
 } from '../../src/lib/filterExtractor';
 import type { FilterExtractResult, WorksheetUsage } from '../../src/lib/filterExtractor';
 import type { CalculatedField, ExtractResult } from '../../src/lib/types';
+import {
+  extractDashboardsFromTwbx,
+  extractDashboardsFromXml,
+  extractProvenanceFromTwbx,
+  extractProvenanceFromXml,
+} from '../../src/lib/dashboardExtractor';
+import { diffWorkbooks, type WorkbookSnapshot } from '../../src/lib/diff';
 import { version as VERSION } from '../package.json';
 
 // ── Workbook loading (cached by path + mtime + size) ──────────────────────────
@@ -534,6 +541,72 @@ server.registerTool(
         worksheets: ws,
         note: ws.length === 0 ? 'No worksheets found in this workbook.' : undefined,
       });
+    } catch (e) {
+      return fail(e);
+    }
+  },
+);
+
+
+/**
+ * Everything the diff needs about one workbook. Each optional extractor is
+ * guarded: a workbook with no dashboards or no SQL still diffs on the rest.
+ */
+function loadSnapshot(inputPath: string): WorkbookSnapshot {
+  const abs = path.resolve(inputPath);
+  if (!fs.existsSync(abs)) throw new Error(`File not found: ${abs}`);
+  const isTwb = abs.toLowerCase().endsWith('.twb');
+  const label = path.basename(abs).replace(/\.twbx?$/i, '');
+
+  const result = loadWorkbook(abs);
+  try {
+    result.worksheets = loadWorksheets(abs);
+  } catch {
+    result.worksheets = [];
+  }
+
+  const safe = <T,>(fn: () => T): T | null => {
+    try {
+      return fn();
+    } catch {
+      return null;
+    }
+  };
+  const readXml = () => fs.readFileSync(abs, 'utf8');
+  const readBuf = () => {
+    const b = fs.readFileSync(abs);
+    return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength) as ArrayBuffer;
+  };
+
+  return {
+    label,
+    result,
+    filters: safe(() => loadFilters(abs)),
+    sql: safe(() => loadSql(abs)),
+    dashboards: safe(() =>
+      isTwb ? extractDashboardsFromXml(readXml(), label) : extractDashboardsFromTwbx(readBuf(), label),
+    ),
+    provenance: safe(() =>
+      isTwb ? extractProvenanceFromXml(readXml(), label) : extractProvenanceFromTwbx(readBuf(), label),
+    ),
+  };
+}
+
+server.registerTool(
+  'diff_workbooks',
+  {
+    title: 'Compare two workbook versions',
+    description:
+      'Semantic diff between two Tableau workbooks: calculations added, removed, renamed or edited (with the downstream fields each edit affects), plus changed parameters, filters, worksheets, dashboards, data sources and stored SQL. Formula reformatting is ignored, and a field that disappears while an identical formula appears under a new name is reported as a rename. Use this for release notes, code review of a workbook change, or answering "what changed and what does it break?".',
+    inputSchema: {
+      before: z.string().describe('Path to the earlier .twbx or .twb'),
+      after: z.string().describe('Path to the later .twbx or .twb'),
+    },
+  },
+  async ({ before, after }) => {
+    try {
+      const diff = diffWorkbooks(loadSnapshot(before), loadSnapshot(after));
+      return ok(diff);
     } catch (e) {
       return fail(e);
     }
