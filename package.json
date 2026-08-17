@@ -8,13 +8,14 @@
   "homepage": "https://tableau-lineage.com",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "build": "tsc --noEmit && vite build && node scripts/prerender.mjs",
     "preview": "vite preview",
     "test:core": "node --experimental-strip-types scripts/test-extractor.mts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:all": "npm run test:core && vitest run"
+    "test:all": "npm run test:core && vitest run",
+    "prerender": "node scripts/prerender.mjs"
   },
   "dependencies": {
     "fflate": "^0.8.2",
