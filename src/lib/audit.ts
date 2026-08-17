@@ -11,6 +11,7 @@
 import type { ExtractResult } from './types';
 import type { FilterExtractResult } from './filterExtractor';
 import type { SqlExtractResult } from './sqlExtractor';
+import type { DashboardExtractResult, ProvenanceExtractResult } from './dashboardExtractor';
 
 // ── Shared helpers ────────────────────────────────────────────────────────────
 
@@ -69,6 +70,8 @@ export interface AuditInput {
   result: ExtractResult;
   filters?: FilterExtractResult | null;
   sql?: SqlExtractResult | null;
+  dashboards?: DashboardExtractResult | null;
+  provenance?: ProvenanceExtractResult | null;
 }
 
 // ── Dead weight ───────────────────────────────────────────────────────────────
@@ -458,6 +461,64 @@ function runLint(input: AuditInput): LintFinding[] {
         subject: s.datasource,
         evidence: s.sql,
         fix: 'Keep it minimal, or move the setup into the database itself.',
+      });
+    }
+  }
+
+  // Dashboard rules.
+  const dashboards = input.dashboards;
+  if (dashboards) {
+    for (const d of dashboards.dashboards) {
+      // Automatic/range sizing makes Tableau re-layout per client viewport.
+      if (d.sizing && d.sizing !== 'fixed' && !d.size) {
+        add({
+          rule: 'non-fixed-dashboard',
+          severity: 'medium',
+          title: 'Dashboard is not fixed size',
+          detail: `"${d.name}" uses ${d.sizing} sizing, so Tableau recomputes the layout for every client viewport instead of caching one image.`,
+          subject: d.name,
+          fix: 'Set a fixed dashboard size, and add device layouts for phone or tablet if needed.',
+        });
+      }
+      if (d.worksheets.length >= 10) {
+        add({
+          rule: 'dense-dashboard',
+          severity: 'medium',
+          title: 'Many worksheets on one dashboard',
+          detail: `"${d.name}" places ${d.worksheets.length} sheets. Every sheet issues its own queries when the dashboard loads.`,
+          subject: d.name,
+          evidence: d.worksheets.slice(0, 8).join(', ') + (d.worksheets.length > 8 ? ', …' : ''),
+          fix: 'Combine sheets that share a query, or move detail onto a drill-down dashboard.',
+        });
+      }
+    }
+
+    // Sheets that exist but appear on no dashboard still load with the workbook.
+    if (dashboards.dashboards.length > 0 && dashboards.orphanWorksheets.length > 0) {
+      add({
+        rule: 'orphan-worksheets',
+        severity: 'low',
+        title: 'Worksheets on no dashboard',
+        detail: `${dashboards.orphanWorksheets.length} worksheet${dashboards.orphanWorksheets.length === 1 ? '' : 's'} are not placed on any dashboard, yet still open with the workbook.`,
+        subject: 'Workbook',
+        evidence:
+          dashboards.orphanWorksheets.slice(0, 8).join(', ') +
+          (dashboards.orphanWorksheets.length > 8 ? ', …' : ''),
+        fix: 'Delete the ones that are no longer needed, or move scratch sheets to a separate workbook.',
+      });
+    }
+  }
+
+  // Provenance rules.
+  for (const ds of input.provenance?.datasources ?? []) {
+    if (!ds.isExtract && ds.connections.some((c) => !c.published)) {
+      add({
+        rule: 'live-connection',
+        severity: 'low',
+        title: 'Live connection',
+        detail: `"${ds.name}" queries the database directly, so every interaction waits on ${ds.connections.map((c) => c.class).join(', ')}.`,
+        subject: ds.name,
+        fix: 'Use an extract if the data does not need to be real time; extracts are usually far faster.',
       });
     }
   }

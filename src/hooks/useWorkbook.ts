@@ -5,6 +5,8 @@ import type { SqlExtractResult } from '../lib/sqlExtractor';
 import { extractFiltersFromXml, extractWorksheetsFromXml } from '../lib/filterExtractor';
 import type { FilterExtractResult } from '../lib/filterExtractor';
 import type { AuditResult } from '../lib/audit';
+import { extractDashboardsFromXml, extractProvenanceFromXml } from '../lib/dashboardExtractor';
+import type { DashboardExtractResult, ProvenanceExtractResult } from '../lib/dashboardExtractor';
 import type { ExtractResult } from '../lib/types';
 
 // 500 MB: safe because only the .twb XML inside is ever decompressed — the
@@ -19,6 +21,8 @@ export interface WorkbookState {
   sql: SqlExtractResult | null;
   filters: FilterExtractResult | null;
   audit: AuditResult | null;
+  dashboards: DashboardExtractResult | null;
+  provenance: ProvenanceExtractResult | null;
   reportHtml: string | null;
   error: string | null;
   fileName: string | null;
@@ -32,6 +36,8 @@ const INITIAL: WorkbookState = {
   sql: null,
   filters: null,
   audit: null,
+  dashboards: null,
+  provenance: null,
   reportHtml: null,
   error: null,
   fileName: null,
@@ -102,12 +108,26 @@ export function useWorkbook() {
         partial.push('worksheets');
       }
 
+      let dashboards: DashboardExtractResult | null = null;
+      try {
+        dashboards = extractDashboardsFromXml(xml, label);
+      } catch {
+        partial.push('dashboards');
+      }
+
+      let provenance: ProvenanceExtractResult | null = null;
+      try {
+        provenance = extractProvenanceFromXml(xml, label);
+      } catch {
+        partial.push('data sources');
+      }
+
       // Audit runs on the already-parsed model. Lazy-imported so none of it
       // touches the landing-page bundle.
       let audit: AuditResult | null = null;
       try {
         const { auditWorkbook } = await import('../lib/audit');
-        audit = auditWorkbook({ result, filters, sql });
+        audit = auditWorkbook({ result, filters, sql, dashboards, provenance });
       } catch {
         partial.push('audit');
       }
@@ -122,6 +142,8 @@ export function useWorkbook() {
         sql,
         filters,
         audit,
+        dashboards,
+        provenance,
         reportHtml,
         error: null,
         fileName: file.name,

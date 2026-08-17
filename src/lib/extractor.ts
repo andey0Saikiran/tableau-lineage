@@ -63,6 +63,21 @@ const LOD_RE = /\{\s*(FIXED|INCLUDE|EXCLUDE)\b/i;
 // reference. Stripped from the stored formula before output.
 const PARAM_TAG = String.fromCharCode(1); // U+0001, cannot appear in a real caption
 
+/**
+ * True only for a real workbook-level <datasource>.
+ *
+ * Every worksheet also carries a <datasources> block listing the sources its
+ * view references, so "parent is <datasources>" is not enough to tell a real
+ * definition from a reference: on a 12-sheet workbook that counts one data
+ * source as thirteen. A genuine definition sits in the <datasources> block
+ * whose own parent is the workbook root.
+ */
+export function isTopLevelDatasource(ds: Element, root: Element): boolean {
+  const parent = ds.parentNode as Element | null;
+  if (!parent || parent.nodeName !== 'datasources') return false;
+  return (parent.parentNode as Element | null) === root;
+}
+
 /** Find the first direct-child element named `tag` (not a descendant search). */
 function findChild(el: Element, tag: string): Element | null {
   for (let n = el.firstChild; n; n = n.nextSibling) {

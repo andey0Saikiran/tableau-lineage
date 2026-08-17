@@ -4,7 +4,7 @@
 // Honest scope note: a workbook only STORES SQL the author wrote. The queries
 // Tableau generates at runtime for live connections are not in the file.
 
-import { TableauExtractionError, readTwbXml } from './extractor';
+import { TableauExtractionError, readTwbXml, isTopLevelDatasource } from './extractor';
 
 export interface SqlConnection {
   class: string;
@@ -64,10 +64,7 @@ function stripBrackets(name: string): string {
 /** Top-level <datasource> elements only (skips nested/federated inner ones). */
 function topLevelDatasources(root: Element): Element[] {
   const all = Array.from(root.getElementsByTagName('datasource'));
-  return all.filter((ds) => {
-    const parent = ds.parentNode as Element | null;
-    return parent != null && parent.nodeName === 'datasources';
-  });
+  return all.filter((ds) => isTopLevelDatasource(ds, root));
 }
 
 export function extractSqlFromXml(

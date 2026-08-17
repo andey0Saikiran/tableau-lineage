@@ -7,7 +7,7 @@
 // shows it), so results are deduplicated by (datasource, field, kind) with the
 // worksheet list aggregated.
 
-import { TableauExtractionError, readTwbXml } from './extractor';
+import { TableauExtractionError, readTwbXml, isTopLevelDatasource } from './extractor';
 
 export type FilterKind = 'categorical' | 'quantitative' | 'relative-date' | string;
 
@@ -73,8 +73,7 @@ function buildDatasourceInfo(root: Element): Map<string, DsInfo> {
   const all = root.getElementsByTagName('datasource');
   for (let i = 0; i < all.length; i++) {
     const ds = all[i];
-    const parent = ds.parentNode as Element | null;
-    if (!parent || parent.nodeName !== 'datasources') continue;
+    if (!isTopLevelDatasource(ds, root)) continue;
     const internal = ds.getAttribute('name') || '';
     if (!internal) continue;
     const label = ds.getAttribute('caption') || internal;

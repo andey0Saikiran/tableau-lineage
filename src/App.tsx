@@ -1,11 +1,22 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { FileUp, Cpu, Share2, Terminal, Copy } from 'lucide-react';
 import { Header } from './components/Header';
 import { AnnouncementBar } from './components/AnnouncementBar';
-import { SqlPanel } from './components/SqlPanel';
-import { FiltersPanel } from './components/FiltersPanel';
-import { AuditPanel } from './components/AuditPanel';
 import { Footer } from './components/Footer';
+
+// Result panels only exist after a workbook is analysed, so they are split out
+// of the landing-page bundle. Keeping the entry chunk small is a hard budget:
+// it is the only JavaScript a first-time visitor (and Google) has to download.
+const SqlPanel = lazy(() => import('./components/SqlPanel').then((m) => ({ default: m.SqlPanel })));
+const FiltersPanel = lazy(() =>
+  import('./components/FiltersPanel').then((m) => ({ default: m.FiltersPanel })),
+);
+const AuditPanel = lazy(() =>
+  import('./components/AuditPanel').then((m) => ({ default: m.AuditPanel })),
+);
+const StructurePanel = lazy(() =>
+  import('./components/StructurePanel').then((m) => ({ default: m.StructurePanel })),
+);
 import { FileUpload } from './components/FileUpload';
 import { HeroGraph } from './components/HeroGraph';
 import { StatsGrid, type HighlightType } from './components/StatsGrid';
@@ -32,7 +43,10 @@ export default function App() {
 
   const t = useMemo(() => makeT(language), [language]);
   const { showToast, ToastViewport } = useToast();
-  const { status, result, sql, filters, audit, reportHtml, error, analyze, reset, clearError } = useWorkbook();
+  const {
+    status, result, sql, filters, audit, dashboards, provenance,
+    reportHtml, error, analyze, reset, clearError,
+  } = useWorkbook();
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -218,11 +232,12 @@ export default function App() {
               toast={showToast}
             />
 
-            <AuditPanel audit={audit} toast={showToast} />
-
-            <FiltersPanel filters={filters} />
-
-            <SqlPanel sql={sql} toast={showToast} />
+            <Suspense fallback={null}>
+              <AuditPanel audit={audit} toast={showToast} />
+              <StructurePanel dashboards={dashboards} provenance={provenance} />
+              <FiltersPanel filters={filters} />
+              <SqlPanel sql={sql} toast={showToast} />
+            </Suspense>
 
             <VisualizerFrame ref={iframeRef} html={reportHtml} title={`${result.fileLabel} — lineage`} />
           </section>
