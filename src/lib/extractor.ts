@@ -184,14 +184,58 @@ function extractParamMembers(col: Element): Parameter['allowed_values'] {
   return out.length ? out : null;
 }
 
-// ── Phase 2: build the internal-name -> caption map across all columns ────────
+// ── Phase 2: build the internal-name -> caption maps ─────────────────────────
+//
+// Two maps, not one. A document-wide map alone is actively wrong: two data
+// sources routinely declare the same internal column name (`[sales]`,
+// `[amount]`, `[order_date]` — a dev and a prod extract, or 2023 and 2024 of the
+// same table), and a single last-write-wins map stamps one data source's caption
+// into the other's formulas. That misreports the formula, points the lineage
+// edge at a data source the calculation never touches, and makes the real column
+// look unreferenced, which the audit then reports as safe to delete.
+//
+// So: a per-data-source map is consulted first, and the global map is only a
+// fallback for names the owning data source does not define (published data
+// sources keep their captions in the worksheet dependency stubs, not on the
+// data source itself).
 function buildFieldMappings(root: Element, s: ExtractState): void {
   const columns = root.getElementsByTagName('column');
   for (let i = 0; i < columns.length; i++) {
     const name = columns[i].getAttribute('name');
     const caption = columns[i].getAttribute('caption');
-    if (name && caption) s.fieldMap.set(name, caption);
+    // First write wins globally, so a worksheet stub cannot override a real
+    // definition that appeared earlier.
+    if (name && caption && !s.fieldMap.has(name)) s.fieldMap.set(name, caption);
   }
+}
+
+/**
+ * What one data source declares: captions for its own columns, and the set of
+ * column names it owns at all.
+ *
+ * The `owned` set is what makes the fallback safe. A column declared with no
+ * caption still belongs to this data source, and its internal name IS its
+ * display name, so the global map must not be consulted for it. Without that
+ * distinction a rename in a *different* data source ("Net Amount") leaks into
+ * this one's formulas, which is the same corruption in a form that needs only
+ * one side to have been renamed.
+ */
+interface DsCaptions {
+  captions: Map<string, string>;
+  owned: Set<string>;
+}
+
+function ownCaptions(ds: Element): DsCaptions {
+  const captions = new Map<string, string>();
+  const owned = new Set<string>();
+  for (const col of ownColumns(ds)) {
+    const name = col.getAttribute('name');
+    if (!name) continue;
+    owned.add(name);
+    const caption = col.getAttribute('caption');
+    if (caption && !captions.has(name)) captions.set(name, caption);
+  }
+  return { captions, owned };
 }
 
 // ── Phase 3: calculated fields (the ones carrying a <calculation> child) ──────
@@ -203,6 +247,8 @@ function extractCalculatedFields(root: Element, s: ExtractState): void {
     if (dsName.toLowerCase() === 'parameters') continue;
 
     const columns = ownColumns(ds);
+    // Resolve this data source's own captions ahead of the document-wide map.
+    const scoped = ownCaptions(ds);
     for (let j = 0; j < columns.length; j++) {
       const col = columns[j];
       const calc = findChild(col, 'calculation');
@@ -216,7 +262,7 @@ function extractCalculatedFields(root: Element, s: ExtractState): void {
       // is the clean, human-readable version stored on the field. Dependencies
       // are read from a copy with comments and string literals blanked out, so
       // a commented-out reference never counts as real usage.
-      const tagged = replaceFieldNames(rawFormula, s);
+      const tagged = replaceFieldNames(rawFormula, s, scoped);
       const formula = tagged.split(PARAM_TAG).join('');
       const { ingredients, paramDeps } = extractDependencies(stripNonCode(tagged));
       const { fieldType, isTableCalc, lodType } = determineFieldType(formula);
@@ -235,7 +281,7 @@ function extractCalculatedFields(root: Element, s: ExtractState): void {
   }
 }
 
-function replaceFieldNames(formula: string, s: ExtractState): string {
+function replaceFieldNames(formula: string, s: ExtractState, scoped?: DsCaptions): string {
   // FIX 1: resolve any [Parameters].[X] reference (X may be caption or name),
   // drop the [Parameters]. qualifier, and stamp it as a parameter so it survives
   // as a param dependency (no phantom "Parameters" token).
@@ -244,15 +290,30 @@ function replaceFieldNames(formula: string, s: ExtractState): string {
     (_m, inner: string) => '[' + PARAM_TAG + (s.paramAliasToDisplay.get(inner) ?? inner) + ']',
   );
 
-  // Regular fields: internal name -> caption (untagged → treated as a field).
-  // Note: we deliberately do NOT rewrite *bare* parameter references here. Real
-  // Tableau always writes params as [Parameters].[X] (handled above); treating a
-  // bare [X] as a field avoids hijacking a same-named field reference.
-  for (const [internalName, caption] of s.fieldMap) {
-    formula = formula.split(internalName).join('[' + caption + ']');
-  }
-
-  return formula;
+  // Regular fields: internal name -> caption, resolved against the owning data
+  // source first. One bracket-anchored pass, never a loop of split/join.
+  //
+  // The old loop rewrote the formula once per entry in the map, feeding each
+  // result into the next. That chained (a caption could be re-matched by a later
+  // internal name) and, on a workbook whose captions each contain other internal
+  // names, expanded the string multiplicatively until the tab ran out of memory.
+  // Scanning once means every token is resolved from the original text exactly
+  // once, so output size is bounded and replacement cannot straddle tokens.
+  //
+  // Bare parameter references are deliberately NOT rewritten: real Tableau always
+  // writes params as [Parameters].[X] (handled above), so treating a bare [X] as
+  // a field avoids hijacking a same-named field reference.
+  return formula.replace(/\[([^\]]+)\]/g, (whole, inner: string) => {
+    if (inner.startsWith(PARAM_TAG)) return whole; // already resolved above
+    const key = '[' + inner + ']';
+    const own = scoped?.captions.get(key);
+    if (own) return '[' + own + ']';
+    // Owned but uncaptioned: the internal name is the display name. Consulting
+    // the global map here would import another data source's rename.
+    if (scoped?.owned.has(key)) return whole;
+    const global = s.fieldMap.get(key);
+    return global ? '[' + global + ']' : whole;
+  });
 }
 
 /**
