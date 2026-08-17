@@ -1,5 +1,5 @@
 import { SlideOver } from './SlideOver';
-import { Info, ShieldCheck, Sparkles, Share2, Filter, Database, Download, Terminal, Globe } from 'lucide-react';
+import { Info, ShieldCheck, Sparkles, Share2, Filter, Database, Download, Terminal, Globe, GitCompare } from 'lucide-react';
 import { REPO_URL } from '../lib/site';
 import type { TranslationKey } from '../lib/i18n';
 
@@ -28,10 +28,11 @@ export function AboutPanel({ open, onClose, t }: PanelProps) {
     <SlideOver open={open} onClose={onClose} title={t('aboutTitle')} icon={<Info className="h-5 w-5 text-brand-600" />}>
       <div className="space-y-7 text-[15px] leading-relaxed text-ink">
         <p className="text-muted">
-          Drop in a Tableau workbook and this tool maps every calculated field, its formula, and what
-          it depends on (raw fields, parameters, LOD and table calculations) as an interactive
-          dependency graph and a searchable data dictionary. Any SQL the workbook stores, Custom SQL
-          queries, Initial SQL, stored procedures, and RAWSQL fields, is surfaced alongside.
+          Drop in a Tableau workbook and this tool audits it (what nothing uses, what is duplicated,
+          what will be slow) and maps every calculated field, its formula, and what it depends on as
+          an interactive dependency graph and a searchable data dictionary. Filters, dashboards, data
+          sources and any stored SQL are surfaced alongside, and you can compare versions to see what
+          changed between them.
         </p>
 
         <section>
@@ -39,7 +40,7 @@ export function AboutPanel({ open, onClose, t }: PanelProps) {
           <ol className="space-y-3">
             <Step n={1} title="Choose a .twbx" body="Drag it in or pick it from your device." />
             <Step n={2} title="Parsed in your browser" body="The workbook is unzipped and its XML read locally. Nothing is uploaded." />
-            <Step n={3} title="Explore & export" body="Walk the graph or dictionary, then download a self-contained interactive HTML report, plus CSV or JSON." />
+            <Step n={3} title="Audit, explore, export" body="Read the audit, walk the graph or dictionary, then download an interactive HTML report, a Markdown handover doc, CSV or JSON." />
           </ol>
         </section>
 
@@ -139,15 +140,36 @@ export function FeaturesPanel({ open, onClose, t }: PanelProps) {
     <SlideOver open={open} onClose={onClose} title={t('featuresTitle')} icon={<Sparkles className="h-5 w-5 text-brand-600" />}>
       <div className="space-y-7 text-[15px] leading-relaxed text-ink">
         <p className="text-muted">
-          Everything the tool reads out of a <code className="rounded bg-slate-100 px-1.5 py-0.5 text-sm text-ink">.twbx</code>,
+          Everything the tool finds in a <code className="rounded bg-slate-100 px-1.5 py-0.5 text-sm text-ink">.twbx</code>,
           all parsed in your browser with nothing uploaded.
         </p>
+
+        <FeatureGroup
+          icon={<ShieldCheck className="h-4 w-4 text-rose-600" />}
+          title="Audit"
+          items={[
+            <>{b('Dead weight')}: every field and parameter nothing uses, graded by confidence with the reason spelled out. Candidates to review, not a blind delete list.</>,
+            <>{b('Duplicate calculations')}: identical formulas under different names, and the riskier case of one name carrying different formulas.</>,
+            <>{b('Performance lint')}: around 15 rules over what the file contains. Heavy and nested LODs, long calculations, only-relevant-values filters, missing context filters, live connections, non-fixed dashboard sizing and more, each with a fix.</>,
+          ]}
+        />
+
+        <FeatureGroup
+          icon={<GitCompare className="h-4 w-4 text-violet-600" />}
+          title="Compare versions"
+          items={[
+            <>Drop in up to {b('five versions')} of the same dashboard and see what changed at each step.</>,
+            <>Calculations {b('added, removed, renamed or edited')}, and for every edit the downstream fields it can break.</>,
+            <>Reformatting is not reported as a change, and a renamed field is reported as a rename rather than an unrelated add and remove.</>,
+          ]}
+        />
 
         <FeatureGroup
           icon={<Share2 className="h-4 w-4 text-brand-600" />}
           title="Lineage & analysis"
           items={[
             <>{b('Interactive dependency graph')}: every field, calculation, parameter, and worksheet as nodes; edges show what feeds what. Cluster, search, zoom, physics.</>,
+            <>{b('Dashboards and provenance')}: which sheets each dashboard places, sheets on no dashboard, hidden sheets, and whether each data source is an extract or live.</>,
             <>{b('Searchable data dictionary')}: every formula grouped by data source, plus per-worksheet sections.</>,
             <>{b('Seven clickable metrics')}: data sources, calculated fields, raw fields, parameters, LOD calcs, table calcs, filters. Click one to highlight or drill in.</>,
             <>{b('Field classification')}: calculated vs raw vs parameter, with LOD and table-calc detection.</>,
@@ -178,7 +200,8 @@ export function FeaturesPanel({ open, onClose, t }: PanelProps) {
           title="Exports"
           items={[
             <>{b('Interactive HTML report')}: self-contained and offline-ready, the same graph and dictionary in one shareable file.</>,
-            <>{b('CSV')} of the field inventory (with worksheet usage) and {b('JSON')} of the full model.</>,
+            <>{b('Markdown handover document')}: the workbook written up for a ticket, a wiki or a README, and the format an AI assistant reads best.</>,
+            <>{b('CSV')} field inventory (with worksheet usage) and {b('JSON')} of the complete model, audit included.</>,
           ]}
         />
 
@@ -191,7 +214,7 @@ export function FeaturesPanel({ open, onClose, t }: PanelProps) {
               <code className="rounded bg-slate-100 px-1.5 py-0.5 text-[13px] text-ink">tableau-lineage-mcp</code>, so
               Claude, Cursor, and other MCP clients can read workbooks on your machine.
             </>,
-            <>{b('9 tools')}: analyze, list calculations, field detail, dependency tracing, parameters, lineage graph, SQL, filters, worksheets.</>,
+            <>{b('11 tools')}: audit, version diff, analyze, list calculations, field detail, dependency tracing, parameters, lineage graph, SQL, filters, worksheets.</>,
             <>Runs {b('100% locally')}, same as the site: the workbook never leaves your computer.</>,
           ]}
         />

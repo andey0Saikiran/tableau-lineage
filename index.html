@@ -16,7 +16,7 @@
     <!-- Open Graph / social -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Tableau Lineage Visualizer" />
-    <meta property="og:title" content="Tableau Lineage Visualizer" />
+    <meta property="og:title" content="Tableau Workbook Auditor" />
     <meta
       property="og:description"
       content="Find unused fields, duplicate calculations and performance problems in any Tableau .twbx, plus full lineage. 100% in your browser. No upload, no tracking."
@@ -25,9 +25,9 @@
     <meta property="og:image" content="https://tableau-lineage.com/og.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Tableau Lineage Visualizer: see the dependencies inside any Tableau workbook" />
+    <meta property="og:image:alt" content="Tableau Workbook Auditor: find unused fields and map the lineage inside any Tableau workbook" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Tableau Lineage Visualizer" />
+    <meta name="twitter:title" content="Tableau Workbook Auditor" />
     <meta
       name="twitter:description"
       content="Find unused fields, duplicate calculations and performance problems in any Tableau .twbx, plus full lineage. 100% in your browser."
@@ -50,7 +50,7 @@
         "applicationCategory": "BusinessApplication",
         "operatingSystem": "Any (web browser)",
         "browserRequirements": "Requires a modern web browser. No installation.",
-        "description": "A privacy-first web app that visualizes the field-level lineage, calculated-field dependencies, stored SQL (Custom SQL, Initial SQL, stored procedures), and metadata inside any Tableau workbook (.twbx), entirely in your browser. Nothing is uploaded.",
+        "description": "A privacy-first web app that audits any Tableau workbook (.twbx): unused fields, duplicate calculations and performance findings, plus the full calculated-field lineage, filters, dashboards, data sources and stored SQL, and a semantic diff between versions. Runs entirely in your browser; nothing is uploaded.",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
         "isAccessibleForFree": true,
         "creator": { "@id": "https://tableau-lineage.com/#author" },
@@ -82,6 +82,30 @@
         "@context": "https://schema.org",
         "@type": "FAQPage",
         "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How do I find unused fields in a Tableau workbook?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Drop the .twbx in and open the audit. It walks the dependency graph from every worksheet and dashboard backwards, then lists the fields, calculations and parameters nothing reaches, each with a confidence level and the reason. Treat them as candidates to review rather than a blind delete list: a workbook file cannot prove a field is unreferenced everywhere, so anything referenced only inside a comment is flagged separately."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How do I see what changed between two versions of a Tableau dashboard?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Use Compare versions and drop in up to five versions of the same dashboard, oldest first. It reports the changes that matter rather than an XML diff: calculations added, removed, renamed or edited, and for every edit the downstream fields it can break, plus changed parameters, filters, worksheets, dashboards, data sources and SQL. Reformatting a calculation is not reported as a change."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Why is my Tableau workbook slow, and can I check without opening it?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "The audit runs around 15 static performance rules over what the workbook file contains: heavy and nested LOD expressions, very long calculations, string-heavy work, quick filters set to only relevant values, missing context filters on large filter sets, live connections, non-fixed dashboard sizing and dense dashboards. Each finding names the offending field or sheet and suggests a fix. It does not replace a performance recording, which measures a live run, but it catches the structural causes before you open Tableau."
+            }
+          },
           {
             "@type": "Question",
             "name": "What is a .twbx file?",

@@ -1,55 +1,102 @@
-# Tableau Lineage Visualizer
+# Tableau Workbook Auditor
 
-A privacy-first web app that visualizes the field-level lineage, calculated-field
-dependencies, and metadata inside any Tableau workbook (`.twbx`), **entirely in your
-browser**. Drop in a workbook and get an interactive dependency graph and a searchable
-data dictionary. Nothing is uploaded, stored, or sent anywhere.
+Find what is wrong with any Tableau workbook (`.twbx`), and map every dependency inside
+it, **entirely in your browser**. Unused fields, duplicate calculations, performance
+problems, full calculated-field lineage, filters, dashboards and stored SQL. Nothing is
+uploaded, stored, or sent anywhere.
 
 🔗 **Live:** https://tableau-lineage.com
+📦 **MCP server:** [`tableau-lineage-mcp`](https://www.npmjs.com/package/tableau-lineage-mcp)
 
 ---
 
 ## Why
 
-Inheriting or auditing someone else's Tableau workbook means reverse-engineering dozens
-of calculated fields and their tangled dependencies by hand. This tool reads the
-workbook's structure and maps it for you: every calculated field, its formula, the raw
-fields and parameters it depends on, which calcs are LOD or table calculations, and any
-SQL the workbook stores (Custom SQL, Initial SQL, stored procedures, RAWSQL fields).
+Inheriting someone else's Tableau workbook means reverse-engineering dozens of
+calculated fields by hand to answer one question: where does this number come from, and
+what breaks if I change it?
 
-Because Tableau workbooks often contain sensitive data, the whole thing runs locally;
-the `.twbx` never leaves your machine.
+Two more questions come up just as often and have no free answer:
+
+- **What in here is dead?** Tableau has no built-in way to list unused fields; the
+  request has been open on the community forum since 2015.
+- **Why is it slow?** Tableau's Workbook Optimizer needs a Creator licence, and Catalog
+  needs Data Management on Server or Cloud.
+
+This reads the workbook file itself and answers all three, free, with no licence and no
+account. Because workbooks often carry sensitive data, everything runs locally: the
+`.twbx` never leaves your machine, which is a property of the architecture rather than a
+promise (there is no server to send it to).
 
 ## Features
 
-- **Interactive dependency graph** (vis-network): nodes for calculated fields, raw
-  fields, and parameters; edges show what depends on what. Cluster by data source,
-  search, highlight dependency chains, zoom and pan.
-- **Searchable data dictionary**: every calculated field grouped by data source, with
-  its formula and dependencies; every parameter with its type, current value, and options.
-- **Stored SQL, surfaced**: when a workbook contains SQL, a panel shows every Custom SQL
-  query (full text), Initial SQL statement, stored-procedure reference with parameters,
-  and `RAWSQL_*` calculated field, each mapped to the connection (class · dbname · server)
-  it targets. Runtime-generated live-connection queries are not stored in files, so they
-  are explicitly out of scope.
-- **Seven metrics at a glance**: data sources, calculated fields, raw fields, parameters,
+### Audit
+
+- **Dead weight**: every field, parameter and calculation nothing uses, graded by
+  confidence (`unused`, `likely-unused`, `referenced-in-comment`) with the reason spelled
+  out. Reported as candidates rather than certainties, because a workbook file cannot
+  prove a field is unreferenced everywhere.
+- **Duplicate calculations**: identical formulas under different names, and the more
+  dangerous case of the same name carrying different formulas.
+- **Performance lint**: ~15 static rules over what the file actually contains. Heavy and
+  nested LODs, long calculations, string-heavy work, "only relevant values" filters, too
+  many quick filters, missing context filters, live connections, non-fixed dashboard
+  sizing, dense dashboards, orphan worksheets.
+
+### Lineage
+
+- **Interactive dependency graph** (vis-network): calculated fields, raw fields,
+  parameters and worksheets as nodes; edges show what feeds what. Cluster by data source,
+  search, highlight chains, zoom and pan.
+- **Searchable data dictionary**: every formula grouped by data source, plus a worksheets
+  section.
+- **Seven clickable metrics**: data sources, calculated fields, raw fields, parameters,
   LOD calcs, table calcs, filters.
-- **Filters, decoded**: every filter deduplicated across worksheets — the field it acts
-  on, its kind (categorical / quantitative / relative-date), context-filter status,
-  stored member selections and ranges, plus a per-worksheet breakdown showing exactly
-  which sheets filter on what. Data-source filters are called out separately.
-- **Worksheets in the lineage**: each sheet appears in the graph as a hexagon wired to
-  the fields it uses (dashed) and filters on (cyan), toggleable via the Sheets button;
-  the dictionary gains a Worksheets section, and the CSV/JSON exports carry a
-  "used in worksheets" mapping per field.
-- **Exports**, all generated in-browser:
-  - **Interactive HTML**: a self-contained, watermarked report (vis-network inlined, so
-    it works offline). The same artifact you see in the app.
-  - **CSV** of the field inventory and **JSON** of the full model.
-- **Clickable metrics**: click a stat (Calculated Fields, Raw Fields, Parameters, LOD,
-  Table Calcs) to highlight those nodes in the graph.
+
+### Structure
+
+- **Filters, decoded**: every filter deduplicated across worksheets, with its kind
+  (categorical / quantitative / relative-date), context-filter status, stored member
+  selections and ranges, and a per-worksheet breakdown. Data-source filters are called out
+  separately.
+- **Dashboards**: which worksheets each dashboard places, its fixed size and device
+  layouts, plus sheets that sit on no dashboard and sheets that are hidden.
+- **Data provenance**: extract or live, connection class / database / server, published
+  (`sqlproxy`) sources, and refresh history where the workbook records it.
+- **Stored SQL**: every Custom SQL query (full text), Initial SQL statement,
+  stored-procedure reference with parameters, and `RAWSQL_*` calculation, each mapped to
+  the connection it targets. Runtime-generated live-connection queries are not stored in
+  workbook files, so they are explicitly out of scope.
+
+### Compare versions
+
+Drop in up to five versions of the same dashboard and get a **semantic diff**: which
+calculations were added, removed, renamed or edited, and for every edit the downstream
+fields it can break, plus changed parameters, filters, worksheets, dashboards, data
+sources and SQL. Reformatting a calculation is not reported as a change, and a field that
+disappears while an identical formula appears under a new name is reported as a rename.
+
+A git diff of two `.twbx` files cannot do this: the workbook is one large XML blob where
+layout coordinates and regenerated ids swamp the handful of real changes.
+
+### Exports
+
+All generated in-browser, from the same parsed model:
+
+- **Interactive HTML report**: self-contained and offline-ready (vis-network inlined),
+  watermarked with the tool and the author.
+- **Markdown handover document**: the workbook written up (metrics, audit, dashboards,
+  data sources, parameters, filters, every formula, stored SQL) for a ticket, a wiki or a
+  README. Also the format an LLM reads best when someone asks about the workbook later.
+- **CSV** field inventory (including which worksheets use each field) and **JSON** of the
+  complete model, audit included.
+
+### Everything else
+
 - **Private by architecture**: `.twbx` parsing (unzip + XML) happens client-side. No
   backend, no upload, no cookies. Analytics is an anonymous, aggregate page-view count.
+- **Workbooks up to 500 MB**: only the workbook XML is decompressed; the packaged data
+  extract is never touched.
 - **Accessible**: keyboard navigation, focus management, AA contrast, reduced-motion
   support, and a text dictionary as an equivalent to the canvas graph.
 - **Seven UI languages** with English fallback.
@@ -58,25 +105,44 @@ the `.twbx` never leaves your machine.
 
 ```
 .twbx (a ZIP)
-  └─ fflate unzips the .twb entry  ──►  DOMParser reads the XML
-        └─ extractor.ts builds the lineage model (calc fields, deps, params, stats)
-              ├─ in-app: rendered as a sandboxed <iframe srcdoc> report
-              └─ exports: HTML / CSV / JSON, all from the same model
+  └─ fflate unzips ONLY the .twb entry  ──►  DOMParser reads the XML once
+        ├─ extractor.ts        lineage model: calcs, dependencies, params, stats
+        ├─ filterExtractor.ts  filters + per-worksheet usage
+        ├─ sqlExtractor.ts     Custom SQL, Initial SQL, stored procs, RAWSQL
+        ├─ dashboardExtractor  dashboards, hidden/orphan sheets, provenance
+        ├─ audit.ts            dead weight, duplicates, performance lint
+        └─ diff.ts             semantic diff between two parsed workbooks
+              ├─ in-app: a sandboxed <iframe srcdoc> report
+              └─ exports: HTML / Markdown / CSV / JSON, all from the same model
 ```
 
-The analytical core (`src/lib/extractor.ts`) is a faithful TypeScript port of the
-original Python service's extraction logic, with two correctness fixes:
+The packaged data extract inside a `.twbx` is never decompressed, which is why a 500 MB
+workbook is fine and why the tool cannot see your rows even in principle.
 
-1. **Parameter references by caption.** Formulas reference parameters by their caption
-   (e.g. `[Parameters].[Survival Target (Months)]`), but the parameter's internal name
-   can differ (`[Survival Benchmark]`). The original failed to resolve these and leaked a
-   phantom `Parameters` dependency. Fixed.
-2. **Table-calc detection by token, not substring.** The original flagged a field as a
-   table calc because `TOTAL` was a substring of `[total_views]`. Now matched as whole
-   function calls (`\bTOTAL\s*(`). LOD detection is brace-anchored.
+### Correctness notes
 
-Both fixes are covered by `npm run test:core` (real-workbook fixtures + a synthetic
-LOD/table-calc case).
+The analytical core is a TypeScript port of the original Python service, with fixes that
+each exist because the naive version was wrong on a real workbook:
+
+1. **Parameter references by caption.** Formulas reference parameters by caption
+   (`[Parameters].[Survival Target (Months)]`) while the internal name differs
+   (`[Survival Benchmark]`). The original leaked a phantom `Parameters` dependency.
+2. **Table-calc detection by token, not substring.** `TOTAL` inside `[total_views]` was
+   flagging ordinary fields as table calcs. Now matched as whole function calls; LOD
+   detection is brace-anchored.
+3. **Comments and string literals are stripped before dependency scanning.** A field name
+   mentioned in a `//` comment is not a dependency, and treating it as one made unused
+   fields look used.
+4. **Nodes are keyed by data source, not name alone.** Two data sources can both define
+   `[Sales]`; merging them fused unrelated lineage into one node.
+5. **Captions resolve document-wide.** Workbooks built on published data sources keep
+   captions only in the worksheet dependency stubs, so filters and worksheet fields
+   surfaced raw keys like `Calculation_5431234567890123`.
+6. **A `<datasources>` block is only real at the workbook root.** Every worksheet carries
+   a reference list of the same shape, which counted one data source thirteen times on a
+   twelve-sheet workbook.
+
+All are covered by tests (`npm test`, `npm run test:core`).
 
 ## Tech stack
 
@@ -86,19 +152,24 @@ Vite · React 19 · TypeScript · Tailwind CSS · [fflate](https://github.com/10
 
 ## MCP server (for AI assistants)
 
-The same extraction engine ships as an MCP server, so Claude, Cursor, and other MCP
-clients can read calculated-field dependencies, formulas, and parameters straight from a
-workbook on your disk. Still 100% local, nothing uploaded.
+The same engine ships as an MCP server, so Claude, Cursor and other MCP clients can read
+and audit workbooks straight from your disk. Still 100% local, nothing uploaded.
 
 ```bash
 claude mcp add tableau-lineage -- npx -y tableau-lineage-mcp
 ```
 
-Tools: `analyze_workbook`, `list_calculated_fields`, `get_field`, `trace_dependencies`,
-`list_parameters`, `get_lineage_graph`, `list_sql_queries` (Custom SQL, Initial SQL,
-stored procs, `RAWSQL_*`), `list_filters` (per-worksheet breakdown, context filters,
-members and ranges), `list_worksheets` (each sheet's fields and filters). Full docs
-in [`mcp/`](mcp/).
+Eleven tools: `analyze_workbook`, `audit_workbook`, `diff_workbooks`,
+`list_calculated_fields`, `get_field`, `trace_dependencies`, `list_parameters`,
+`get_lineage_graph`, `list_sql_queries`, `list_filters`, `list_worksheets`. Full docs in
+[`mcp/`](mcp/).
+
+Things worth asking it:
+
+- "Audit this workbook and tell me what is safe to delete."
+- "What changed between these two versions, and what does it break?"
+- "Which sheets filter on Region, and what values are selected?"
+- "Write a data dictionary for this workbook."
 
 ## Run locally
 
@@ -110,11 +181,17 @@ npm run dev          # http://localhost:5173
 Other scripts:
 
 ```bash
-npm run build        # typecheck + production build to dist/
+npm run build        # typecheck + production build + pre-render to dist/
 npm run preview      # serve the production build
 npm run typecheck    # tsc --noEmit
+npm test             # Vitest: extractors, audit, diff, exports
 npm run test:core    # extractor parity + regression tests (Node)
+npm run prerender    # re-run the static pre-render over an existing dist/
 ```
+
+The build pre-renders the landing page with `react-dom/server` and injects the markup
+into `dist/index.html`, so crawlers get real content instead of an empty `<div id="root">`.
+It stays a fully static site: there is no server at build time or run time.
 
 ## Deploy (Cloudflare Pages)
 

@@ -2,21 +2,18 @@
 
 **Let your AI assistant read the lineage inside Tableau workbooks without the workbook ever leaving your machine.**
 
-An [MCP](https://modelcontextprotocol.io) server that parses local Tableau workbooks (`.twbx` / `.twb`) and exposes their calculated-field dependencies, formulas, parameters, and full lineage graph as tools for Claude, Cursor, and any other MCP client.
+An [MCP](https://modelcontextprotocol.io) server that parses local Tableau workbooks (`.twbx` / `.twb`) and exposes eleven tools to Claude, Cursor and any other MCP client: a full workbook audit (unused fields, duplicate calculations, performance findings), a semantic diff between two versions, and the complete lineage of every calculated field, parameter, filter, worksheet, dashboard and stored SQL statement.
 
 It is the same open-source extraction engine that powers [tableau-lineage.com](https://tableau-lineage.com), wrapped for AI assistants. Parsing happens **in-process on your machine**: no upload, no server, no account. When reading a `.twbx`, only the workbook XML is decompressed; the bundled data extract is never touched.
 
 ## What you can ask your assistant
 
-- *"Which fields does `[Profit Ratio]` depend on in `~/Downloads/Sales.twbx`?"*
-- *"What breaks if I change `[Revenue Base]`?"* (transitive impact analysis)
-- *"List every LOD expression in this workbook with its formula."*
-- *"Which calculated fields use the `Date Granularity` parameter?"*
-- *"Show me the Custom SQL this workbook runs, and which database it hits."*
-- *"Which filters does the Overview sheet apply, and which fields drive them?"*
-- *"Document all calculations in this workbook as a data dictionary."*
-
-Note on SQL: the workbook stores the SQL its author wrote (Custom SQL, Initial SQL, stored procs, `RAWSQL_*`). Queries Tableau auto-generates at runtime for live connections are not saved in the file, so no tool can extract those from a `.twbx`.
+- *"Audit `~/Downloads/Sales.twbx`. What is safe to delete?"*
+- *"What changed between v3 and v4 of this dashboard, and what does it break?"*
+- *"Which fields does `[Profit Ratio]` depend on?"*
+- *"Why is this workbook slow?"*
+- *"Which sheets filter on Region, and what values are selected?"*
+- *"Write a data dictionary for this workbook."*
 
 ## Install
 
@@ -51,21 +48,26 @@ Requires Node.js 18+.
 
 | Tool | What it does |
 | --- | --- |
-| `analyze_workbook` | Overview: stats, datasources, calculated fields by type, parameters, raw fields |
+| `audit_workbook` | Unused fields and parameters (graded by confidence, with reasons), duplicate calculations, and performance findings with severities and fixes |
+| `diff_workbooks` | Semantic diff of two versions: calculations added, removed, renamed or edited (each edit with the downstream fields it affects), plus parameters, filters, sheets, dashboards, data sources and SQL |
+| `analyze_workbook` | Overview: stats, data sources, calculated fields by type, parameters, raw fields |
 | `list_calculated_fields` | Every calculation with formula, type, and direct dependencies; optional substring filter |
 | `get_field` | One field in full detail, including everything that directly uses it |
-| `trace_dependencies` | Upstream tree (down to raw columns and parameters) + transitive downstream impact |
+| `trace_dependencies` | Upstream tree (down to raw columns and parameters) plus transitive downstream impact |
 | `list_parameters` | Parameters with values, datatypes, allowed values, and which fields use them |
-| `get_lineage_graph` | The complete dependency graph as nodes + edges JSON |
-| `list_sql_queries` | Every SQL statement stored in the workbook: Custom SQL (full query text), Initial SQL, stored-procedure references with parameters, and `RAWSQL_*` calculated fields, each with the connection it targets |
-| `list_filters` | Every filter, deduplicated across worksheets: the field it acts on, kind (categorical / quantitative / relative-date), context-filter status, member selections and ranges, plus a `by_worksheet` breakdown |
-| `list_worksheets` | Every worksheet with the fields it uses (caption-resolved) and the filters it applies — the per-sheet view of the workbook |
+| `get_lineage_graph` | The complete dependency graph as nodes and edges JSON |
+| `list_sql_queries` | Custom SQL (full query text), Initial SQL, stored-procedure references with parameters, and `RAWSQL_*` calculations, each with the connection it targets |
+| `list_filters` | Every filter, deduplicated across worksheets: field, kind, context-filter status, member selections and ranges, plus a `by_worksheet` breakdown |
+| `list_worksheets` | Every worksheet with the fields it uses (caption-resolved) and the filters it applies |
 
 All tools take a `path` to a local `.twbx` or `.twb` file. Field names are case-insensitive and brackets are optional: `Profit Ratio` and `[profit ratio]` both resolve.
 
 ## Privacy
 
 - The workbook is read from your local disk and parsed in the Node process. **Nothing is sent anywhere.**
+- Unused fields are reported as *candidates* with a confidence level, never as a
+  guaranteed-safe delete list: a workbook file cannot prove a field is unreferenced
+  everywhere. Read the reason before deleting anything.
 - For `.twbx` packages, only `.twb` XML entries are decompressed. The packaged data extract (`.hyper` / `.tde`) is skipped entirely.
 - No analytics, no telemetry, no network calls at all.
 
@@ -73,7 +75,7 @@ Because this package is open source, you can verify all of the above in [the cod
 
 ## Prefer a UI?
 
-The same engine runs as a free web app at **[tableau-lineage.com](https://tableau-lineage.com)**: drag a `.twbx` in and get an interactive lineage graph and searchable data dictionary, 100% in your browser.
+The same engine runs as a free web app at **[tableau-lineage.com](https://tableau-lineage.com)**: drag a `.twbx` in and get the audit, an interactive lineage graph, a searchable data dictionary, and a version comparison, 100% in your browser.
 
 ## Development
 

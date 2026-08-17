@@ -5,6 +5,18 @@ import { ChevronDown } from 'lucide-react';
 // the structured-data answers to match the visible text).
 const FAQS = [
   {
+    q: 'How do I find unused fields in a Tableau workbook?',
+    a: 'Drop the .twbx in and open the audit. It walks the dependency graph from every worksheet and dashboard backwards, then lists the fields, calculations and parameters nothing reaches, each with a confidence level and the reason. Treat them as candidates to review rather than a blind delete list: a workbook file cannot prove a field is unreferenced everywhere, so anything referenced only inside a comment is flagged separately.',
+  },
+  {
+    q: 'How do I see what changed between two versions of a Tableau dashboard?',
+    a: 'Use Compare versions and drop in up to five versions of the same dashboard, oldest first. It reports the changes that matter rather than an XML diff: calculations added, removed, renamed or edited, and for every edit the downstream fields it can break, plus changed parameters, filters, worksheets, dashboards, data sources and SQL. Reformatting a calculation is not reported as a change.',
+  },
+  {
+    q: 'Why is my Tableau workbook slow, and can I check without opening it?',
+    a: 'The audit runs around 15 static performance rules over what the workbook file contains: heavy and nested LOD expressions, very long calculations, string-heavy work, quick filters set to only relevant values, missing context filters on large filter sets, live connections, non-fixed dashboard sizing and dense dashboards. Each finding names the offending field or sheet and suggests a fix. It does not replace a performance recording, which measures a live run, but it catches the structural causes before you open Tableau.',
+  },
+  {
     q: 'What is a .twbx file?',
     a: 'A .twbx is a Tableau packaged workbook. It is a single ZIP archive that bundles the workbook definition (a .twb XML file) together with its data extracts, images, and other resources, so an entire dashboard can be shared as one file.',
   },
@@ -65,12 +77,13 @@ export function SeoContent() {
           id="learn-heading"
           className="text-balance text-2xl font-extrabold tracking-tight text-ink sm:text-[1.7rem]"
         >
-          Understand any Tableau workbook in seconds
+          Audit and understand any Tableau workbook in seconds
         </h2>
         <p className="mt-3 max-w-2xl text-pretty text-[15px] leading-relaxed text-muted">
           Inheriting a Tableau dashboard usually means an afternoon of double-clicking fields to work out
-          where a number comes from. Tableau Lineage Visualizer reads the calculated-field dependencies,
-          parameters, stored SQL, and metadata inside any{' '}
+          where a number comes from, and no way at all to tell what in it is dead. This tool audits and
+          reads the calculated-field dependencies, unused fields, filters, dashboards, stored SQL and
+          metadata inside any{' '}
           <code className="rounded bg-slate-100 px-1.5 py-0.5 text-sm text-ink">.twbx</code> and lays them
           out as an interactive lineage graph and a searchable data dictionary, all in your browser, with
           nothing uploaded.
