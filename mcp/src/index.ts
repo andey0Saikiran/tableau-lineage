@@ -31,6 +31,7 @@ import {
   extractProvenanceFromXml,
 } from '../../src/lib/dashboardExtractor';
 import { diffWorkbooks, type WorkbookSnapshot } from '../../src/lib/diff';
+import { auditWorkbook } from '../../src/lib/audit';
 import { version as VERSION } from '../package.json';
 
 // ── Workbook loading (cached by path + mtime + size) ──────────────────────────
@@ -607,6 +608,49 @@ server.registerTool(
     try {
       const diff = diffWorkbooks(loadSnapshot(before), loadSnapshot(after));
       return ok(diff);
+    } catch (e) {
+      return fail(e);
+    }
+  },
+);
+
+
+server.registerTool(
+  'audit_workbook',
+  {
+    title: 'Audit a workbook for dead weight and performance',
+    description:
+      'Find what is wrong with a workbook: fields and parameters nothing uses (each with a confidence level and the reason), duplicate calculations (identical formulas under different names, and the more dangerous same-name-different-formula case), and performance findings (heavy LODs, nested calculations, filters that fetch only relevant values, non-fixed dashboard sizing, live connections, and more). Use it before a cleanup, a migration, or a workbook review. Unused fields are reported with confidence rather than as certainties, because a field can be referenced in ways a file cannot show.',
+    inputSchema: { path: pathArg },
+  },
+  async ({ path: p }) => {
+    try {
+      const result = loadWorkbook(p);
+      try {
+        result.worksheets = loadWorksheets(p);
+      } catch {
+        result.worksheets = [];
+      }
+      const snap = loadSnapshot(p);
+      const audit = auditWorkbook({
+        result,
+        filters: snap.filters,
+        sql: snap.sql,
+        dashboards: snap.dashboards,
+        provenance: snap.provenance,
+      });
+      return ok({
+        workbook: result.fileLabel,
+        dead_weight_pct: audit.dead_weight_pct,
+        unused_count: audit.dead.length,
+        unused_by_confidence: audit.dead_by_confidence,
+        unused: audit.dead,
+        duplicates: audit.duplicates,
+        performance_by_severity: audit.lint_by_severity,
+        performance: audit.lint,
+        limited: audit.limited,
+        limitations: audit.limitations,
+      });
     } catch (e) {
       return fail(e);
     }

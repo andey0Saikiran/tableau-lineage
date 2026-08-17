@@ -65,8 +65,8 @@ try {
   const tools = await rpc('tools/list', {});
   const names = tools.tools.map((t) => t.name).sort();
   check(
-    'exposes all 10 tools',
-    ['analyze_workbook', 'diff_workbooks', 'get_field', 'get_lineage_graph', 'list_calculated_fields', 'list_filters', 'list_parameters', 'list_sql_queries', 'list_worksheets', 'trace_dependencies']
+    'exposes all 11 tools',
+    ['analyze_workbook', 'audit_workbook', 'diff_workbooks', 'get_field', 'get_lineage_graph', 'list_calculated_fields', 'list_filters', 'list_parameters', 'list_sql_queries', 'list_worksheets', 'trace_dependencies']
       .every((n) => names.includes(n)),
     names.join(', '),
   );
@@ -154,6 +154,16 @@ try {
     pubWs.worksheets?.[0]?.fields?.includes('Attainment Ratio')
     && !pubWs.worksheets?.[0]?.fields?.some((x) => /^Calculation_\d+/.test(x)),
     pubWs.worksheets?.[0]?.fields?.join(', '));
+
+  // ── Audit ───────────────────────────────────────────────────────────────────
+  const aud = jsonOf(await rpc('tools/call', { name: 'audit_workbook', arguments: { path: demoTwbx } }));
+  check('audit reports unused fields with confidence levels',
+    aud.unused_count > 0 && typeof aud.dead_weight_pct === 'number'
+    && aud.unused.every((d) => ['unused', 'likely-unused', 'referenced-in-comment'].includes(d.confidence)),
+    `${aud.unused_count} unused, ${aud.dead_weight_pct}% dead weight`);
+  check('audit reports performance findings with a severity and a fix',
+    aud.performance.length > 0 && aud.performance.every((f) => ['high','medium','low'].includes(f.severity)),
+    aud.performance.map((f) => f.rule).join(', '));
 
   // ── Diff ────────────────────────────────────────────────────────────────────
   const v2Fixture = path.join(here, '..', '..', 'test', 'fixtures', 'custom-sql-v2.twbx');

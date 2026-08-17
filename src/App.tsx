@@ -4,6 +4,7 @@ import { Header } from './components/Header';
 import { AnnouncementBar } from './components/AnnouncementBar';
 import { Footer } from './components/Footer';
 import { ConnectCard } from './components/ConnectCard';
+import { CompareCta } from './components/CompareCta';
 
 // Result panels only exist after a workbook is analysed, so they are split out
 // of the landing-page bundle. Keeping the entry chunk small is a hard budget:
@@ -53,7 +54,7 @@ export default function App() {
     status, result, sql, filters, audit, dashboards, provenance,
     reportHtml, error, analyze, reset, clearError,
   } = useWorkbook();
-  const { diff, busy: comparing, error: compareError, compare, resetCompare } = useCompare();
+  const { steps: diffSteps, busy: comparing, error: compareError, compare, resetCompare } = useCompare();
 
   useEffect(() => {
     document.documentElement.lang = language;
@@ -122,7 +123,6 @@ export default function App() {
         t={t}
         language={language}
         onLanguage={setLanguage}
-        onCompare={() => setCompareOpen(true)}
         onFeatures={() => setFeaturesOpen(true)}
         onAbout={() => setAboutOpen(true)}
         onPrivacy={() => setPrivacyOpen(true)}
@@ -132,11 +132,11 @@ export default function App() {
         {compareOpen ? (
           <Suspense fallback={null}>
             <ComparePanel
-              onCompare={(b, a) => {
+              onCompare={(fs) => {
                 trackEvent('compare');
-                compare(b, a);
+                compare(fs);
               }}
-              diff={diff}
+              steps={diffSteps}
               busy={comparing}
               error={compareError}
               onClose={() => {
@@ -163,6 +163,8 @@ export default function App() {
                 onClearError={clearError}
                 onTryDemo={tryDemo}
               />
+
+              <CompareCta onOpen={() => setCompareOpen(true)} />
 
               {/* MCP callout: the AI-assistant path, right under the upload card */}
               <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2.5 rounded-2xl border border-border bg-white/70 p-4 shadow-sm backdrop-blur-sm">
@@ -215,7 +217,7 @@ export default function App() {
 
             <ResultActions
               t={t}
-              result={result}
+              bundle={{ result, audit, filters, sql, dashboards, provenance }}
               reportHtml={reportHtml}
               onReset={() => {
                 reset();

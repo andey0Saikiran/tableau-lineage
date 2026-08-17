@@ -1,17 +1,18 @@
-import { Download, Table2, Braces, RefreshCw } from 'lucide-react';
-import { downloadReportHtml, downloadCsv, downloadJson } from '../lib/exports';
-import type { ExtractResult } from '../lib/types';
+import { Download, Table2, Braces, FileText, RefreshCw } from 'lucide-react';
+import { downloadReportHtml, downloadCsv, downloadJson, downloadMarkdown } from '../lib/exports';
+import type { AnalysisBundle } from '../lib/exports';
 import type { TranslationKey } from '../lib/i18n';
 
 interface Props {
   t: (k: TranslationKey) => string;
-  result: ExtractResult;
+  bundle: AnalysisBundle;
   reportHtml: string;
   onReset: () => void;
   toast: (msg: string, kind?: 'info' | 'success' | 'error') => void;
 }
 
-export function ResultActions({ t, result, reportHtml, onReset, toast }: Props) {
+export function ResultActions({ t, bundle, reportHtml, onReset, toast }: Props) {
+  const { result } = bundle;
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -38,11 +39,19 @@ export function ResultActions({ t, result, reportHtml, onReset, toast }: Props) 
         />
         <SecondaryButton
           onClick={() => {
-            downloadJson(result);
+            downloadJson(bundle);
             toast(t('jsonDownloaded'), 'success');
           }}
           icon={<Braces className="h-4 w-4" />}
           label={t('downloadJson')}
+        />
+        <SecondaryButton
+          onClick={() => {
+            downloadMarkdown(bundle);
+            toast(t('markdownDownloaded'), 'success');
+          }}
+          icon={<FileText className="h-4 w-4" />}
+          label={t('downloadMarkdown')}
         />
       </div>
 

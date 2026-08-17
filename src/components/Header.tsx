@@ -1,4 +1,4 @@
-import { Info, ShieldCheck, Sparkles, GitCompare } from 'lucide-react';
+import { Info, ShieldCheck, Sparkles } from 'lucide-react';
 import { Github, Linkedin } from './BrandIcons';
 import { Logo } from './Logo';
 import { LanguageSelector } from './LanguageSelector';
@@ -9,13 +9,12 @@ interface Props {
   t: (k: TranslationKey) => string;
   language: Language;
   onLanguage: (l: Language) => void;
-  onCompare: () => void;
   onFeatures: () => void;
   onAbout: () => void;
   onPrivacy: () => void;
 }
 
-export function Header({ t, language, onLanguage, onCompare, onFeatures, onAbout, onPrivacy }: Props) {
+export function Header({ t, language, onLanguage, onFeatures, onAbout, onPrivacy }: Props) {
   return (
     <header className="sticky top-0 z-30 border-b border-black/5 bg-white/70 backdrop-blur-xl">
       <div className="mx-auto flex max-w-[96rem] items-center justify-between gap-3 px-4 py-3 sm:px-6">
@@ -42,14 +41,6 @@ export function Header({ t, language, onLanguage, onCompare, onFeatures, onAbout
             <Linkedin className="h-4 w-4" />
             <span className="hidden lg:inline">by {CREATOR.name}</span>
           </a>
-          <button
-            type="button"
-            onClick={onCompare}
-            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium text-muted transition-colors hover:bg-brand-50 hover:text-brand-600"
-          >
-            <GitCompare className="h-4 w-4" />
-            <span className="hidden sm:inline">{t('compareTitle')}</span>
-          </button>
           <button
             type="button"
             onClick={onFeatures}

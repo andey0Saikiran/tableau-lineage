@@ -40,6 +40,7 @@ const en = {
   downloadPng: 'Graph PNG',
   downloadCsv: 'Fields CSV',
   downloadJson: 'Data JSON',
+  downloadMarkdown: 'Handover doc',
 
   workbookAnalyzed: 'Workbook analyzed successfully 🎉',
   analyzingWorkbook: 'Reading your workbook…',
@@ -50,6 +51,7 @@ const en = {
   pngDownloaded: 'Graph image downloaded',
   csvDownloaded: 'CSV downloaded',
   jsonDownloaded: 'JSON downloaded',
+  markdownDownloaded: 'Documentation downloaded',
 
   invalidFile: 'Please choose a valid .twbx file',
   fileTooLarge: 'That file is larger than 500 MB',
