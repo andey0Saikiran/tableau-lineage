@@ -620,7 +620,7 @@ server.registerTool(
   {
     title: 'Audit a workbook for dead weight and performance',
     description:
-      'Find what is wrong with a workbook: fields and parameters nothing uses (each with a confidence level and the reason), duplicate calculations (identical formulas under different names, and the more dangerous same-name-different-formula case), and performance findings (heavy LODs, nested calculations, filters that fetch only relevant values, non-fixed dashboard sizing, live connections, and more). Use it before a cleanup, a migration, or a workbook review. Unused fields are reported with confidence rather than as certainties, because a field can be referenced in ways a file cannot show.',
+      'Find what is wrong with a workbook: fields and parameters nothing uses (each with a confidence level and the reason), duplicate calculations (identical formulas under different names, and the more dangerous same-name-different-formula case), and performance findings (heavy LODs, nested calculations, deep calculation chains, non-fixed dashboard sizing, live connections, and more). Use it before a cleanup, a migration, or a workbook review. Unused fields are reported with confidence rather than as certainties, because a field can be referenced in ways a file cannot show.',
     inputSchema: { path: pathArg },
   },
   async ({ path: p }) => {

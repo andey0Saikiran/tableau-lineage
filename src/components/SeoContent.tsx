@@ -14,7 +14,7 @@ const FAQS = [
   },
   {
     q: 'Why is my Tableau workbook slow, and can I check without opening it?',
-    a: 'The audit runs around 15 static performance rules over what the workbook file contains: heavy and nested LOD expressions, very long calculations, string-heavy work, quick filters set to only relevant values, missing context filters on large filter sets, live connections, non-fixed dashboard sizing and dense dashboards. Each finding names the offending field or sheet and suggests a fix. It does not replace a performance recording, which measures a live run, but it catches the structural causes before you open Tableau.',
+    a: 'The audit runs around 15 static performance rules over what the workbook file contains: heavy and nested LOD expressions, very long calculations, string-heavy work, deep calculation chains, missing context filters on large filter sets, live connections, non-fixed dashboard sizing and dense dashboards. Each finding names the offending field or sheet and suggests a fix. It does not replace a performance recording, which measures a live run, but it catches the structural causes before you open Tableau.',
   },
   {
     q: 'What is a .twbx file?',

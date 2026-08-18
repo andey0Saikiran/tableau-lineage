@@ -103,7 +103,7 @@
             "name": "Why is my Tableau workbook slow, and can I check without opening it?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "The audit runs around 15 static performance rules over what the workbook file contains: heavy and nested LOD expressions, very long calculations, string-heavy work, quick filters set to only relevant values, missing context filters on large filter sets, live connections, non-fixed dashboard sizing and dense dashboards. Each finding names the offending field or sheet and suggests a fix. It does not replace a performance recording, which measures a live run, but it catches the structural causes before you open Tableau."
+              "text": "The audit runs around 15 static performance rules over what the workbook file contains: heavy and nested LOD expressions, very long calculations, string-heavy work, deep calculation chains, missing context filters on large filter sets, live connections, non-fixed dashboard sizing and dense dashboards. Each finding names the offending field or sheet and suggests a fix. It does not replace a performance recording, which measures a live run, but it catches the structural causes before you open Tableau."
             }
           },
           {
@@ -119,7 +119,7 @@
             "name": "How do I see calculated field dependencies in a Tableau workbook?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Drop the .twbx into Tableau Lineage Visualizer and it reads every calculated field, parameter, and data source, then draws the dependencies as an interactive graph. You can trace which fields feed a calculation, follow a parameter through the logic, and search the full data dictionary instead of clicking through the workbook by hand."
+              "text": "Drop the .twbx here and the tool reads every calculated field, parameter, and data source, then draws the dependencies as an interactive graph. You can trace which fields feed a calculation, follow a parameter through the logic, and search the full data dictionary instead of clicking through the workbook by hand."
             }
           },
           {

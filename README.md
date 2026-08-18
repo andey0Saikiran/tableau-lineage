@@ -194,22 +194,29 @@ The build pre-renders the landing page with `react-dom/server` and injects the m
 into `dist/index.html`, so crawlers get real content instead of an empty `<div id="root">`.
 It stays a fully static site: there is no server at build time or run time.
 
-## Deploy (Cloudflare Pages)
+## Deploy (Cloudflare Workers static assets)
 
-This is a static site; deploy the `dist/` folder to any static host. Recommended:
-**Cloudflare Pages** (unlimited bandwidth, global CDN, native apex-domain TLS).
+This is a static site; the `dist/` folder can go on any static host. The live site runs on
+**Cloudflare Workers static assets**, configured by `wrangler.jsonc` in this repo:
+
+```jsonc
+{ "name": "tableau-lineage", "assets": { "directory": "./dist" } }
+```
 
 1. Push this repo to GitHub.
-2. Cloudflare dashboard → **Workers & Pages → Create → Pages → Connect to Git** → select
-   the repo.
+2. Cloudflare dashboard → **Workers & Pages → Create → Import a repository** → select the
+   repo. Cloudflare reads `wrangler.jsonc` and serves `dist/` as static assets.
 3. Build settings:
    - **Build command:** `npm run build`
-   - **Output directory:** `dist`
-4. Every push to `main` now builds and deploys automatically. (Cloudflare Workers Builds
-   runs the build and deploy on each push.)
-5. **Custom domain:** Pages project → Custom domains → add `tableau-lineage.com` and
-   `www`. Moving the domain's nameservers to Cloudflare gives automatic HTTPS and
-   apex-domain handling.
+   - **Deploy command:** `npx wrangler deploy`
+4. Every push to `main` builds and deploys automatically.
+5. **Custom domain:** the Worker → Settings → Domains & Routes → add `tableau-lineage.com`
+   (leave the subdomain field blank for the apex). `www` is a proxied CNAME to the apex
+   plus a redirect rule. Moving the domain's nameservers to Cloudflare gives automatic
+   HTTPS.
+
+Note: this is Workers, not Pages. A Pages project built from the same repo would deploy a
+second, parallel copy of the site.
 
 `public/_headers` ships a security baseline and a Content-Security-Policy that restricts
 outbound connections to this origin and Cloudflare's analytics only, which is what makes

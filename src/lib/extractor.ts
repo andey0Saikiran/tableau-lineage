@@ -442,7 +442,7 @@ function collectAllColumns(root: Element): WorkbookColumn[] {
       if (!internalName) continue;
       const caption = col.getAttribute('caption') || '';
       const cleanInternal = internalName.replace(/^[[\]]+|[[\]]+$/g, '');
-      const key = `${dsName} ${cleanInternal.toLowerCase()}`;
+      const key = `${dsName}\0${cleanInternal.toLowerCase()}`;
       if (seen.has(key)) continue;
       seen.add(key);
 
@@ -553,7 +553,9 @@ export function readTwbXml(buffer: ArrayBuffer): string {
   if (!twbName) {
     if (oversized) {
       throw new TableauExtractionError(
-        'This workbook is unusually large to parse in the browser. Try a smaller .twbx.',
+        `The workbook definition inside this .twbx is larger than ${Math.round(
+          MAX_TWB_BYTES / (1024 * 1024),
+        )} MB, which is too large to parse in the browser. This is a limit on the .twb XML itself, not on the packaged file size.`,
       );
     }
     throw new TableauExtractionError('No .twb workbook was found inside the .twbx archive.');

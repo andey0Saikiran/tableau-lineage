@@ -324,7 +324,7 @@
         const data = __JSON_DATA__;
         const parameters = __PARAMS_JSON__;
         const worksheets = __WORKSHEETS_JSON__;
-        const WS_PREFIX = 'ws'; // node-id prefix so a sheet can share a field's name
+        const WS_PREFIX = 'ws\u0001'; // node-id prefix so a sheet can share a field's name
 
         let network = null;
         let nodesDS = new vis.DataSet();
@@ -349,10 +349,10 @@
         const parameterData = {};
         parameters.forEach(p => { parameterData[p.name] = p; });
 
-        // Graph node ids are "<data source> <field name>". Bare names are not
+        // Graph node ids are "<data source>\0<field name>". Bare names are not
         // unique: two data sources can each define a field with the same caption,
         // and keying on the name alone merged them into a single node.
-        const NODE_SEP = ' ';
+        const NODE_SEP = '\0';
         function nodeKey(ds, name) { return String(ds) + NODE_SEP + String(name); }
         /** Bare label -> node ids that carry it (populated while the graph builds). */
         const idsByLabel = new Map();
@@ -393,7 +393,7 @@
             // define a field with the same caption; keying nodes on the bare name
             // merged them into one and silently reattributed the second one's
             // formula and edges. Labels stay bare so the graph still reads simply.
-            const calcByKey = new Map();   // "ds name" -> calc
+            const calcByKey = new Map();   // "ds\0name" -> calc
             const calcByName = new Map();  // "name" -> [calc, ...] (cross-source fallback)
             data.forEach(d => {
                 calcByKey.set(nodeKey(d.datasource, d.field_name), d);
