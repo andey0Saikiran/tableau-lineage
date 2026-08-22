@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "lineage": {
+      "command": "npx",
+      "args": ["-y", "tableau-lineage-mcp@^1.0.0"]
+    }
+  }
+}

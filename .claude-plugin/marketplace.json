@@ -1,0 +1,20 @@
+{
+  "name": "tableau-lineage",
+  "owner": { "name": "Sai Kiran Andey", "url": "https://github.com/andey0Saikiran" },
+  "description": "Local-only Tableau workbook tooling for Claude Code. Reads .twbx/.twb files on your machine and returns lineage, audit and diff data. Nothing is uploaded.",
+  "plugins": [
+    {
+      "name": "tableau-lineage",
+      "source": "./plugins/tableau-lineage",
+      "displayName": "Tableau Lineage",
+      "description": "Audit and trace Tableau workbooks (.twbx/.twb) from Claude Code: calculated-field lineage, unused fields, duplicate calcs, performance findings, filters, worksheets, stored SQL, and workbook-to-workbook diffs. Runs 100% locally over stdio; the workbook never leaves your machine.",
+      "version": "1.0.1",
+      "category": "data",
+      "keywords": ["tableau", "twbx", "data-lineage", "bi", "audit", "calculated-fields", "diff", "local-only"],
+      "author": { "name": "Sai Kiran Andey", "url": "https://github.com/andey0Saikiran" },
+      "homepage": "https://tableau-lineage.com",
+      "repository": "https://github.com/andey0Saikiran/tableau-lineage",
+      "license": "MIT"
+    }
+  ]
+}

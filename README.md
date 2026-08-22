@@ -159,7 +159,14 @@ and audit workbooks straight from your disk. Still 100% local, nothing uploaded.
 **Claude Desktop:** [download the extension](https://github.com/andey0Saikiran/tableau-lineage/releases/latest/download/tableau-lineage.mcpb)
 and double-click it. One click, no terminal and no Node setup.
 
-**Claude Code, Cursor and other clients:**
+**Claude Code** (installs the MCP plus a skill that knows when to use it):
+
+```
+/plugin marketplace add andey0Saikiran/tableau-lineage
+/plugin install tableau-lineage@tableau-lineage
+```
+
+**Cursor and other MCP clients:**
 
 ```bash
 claude mcp add tableau-lineage -- npx -y tableau-lineage-mcp
