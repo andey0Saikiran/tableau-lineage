@@ -14,3 +14,7 @@ yarn-error.log*
 # Agent/scratch test files must never be swept in by `git add -A`
 test/_*.test.ts
 test/**/_*.test.ts
+
+# MCPB build output (the .mcpb is attached to a GitHub Release, not committed)
+mcp/build-mcpb/
+mcp/*.mcpb

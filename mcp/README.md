@@ -62,7 +62,28 @@ Requires Node.js 18+.
 
 All tools take a `path` to a local `.twbx` or `.twb` file. Field names are case-insensitive and brackets are optional: `Profit Ratio` and `[profit ratio]` both resolve.
 
-## Privacy
+## Privacy Policy
+
+Full policy: https://github.com/andey0Saikiran/tableau-lineage/blob/main/PRIVACY.md
+
+**What is collected: nothing.** This server makes no network requests of any kind. It
+reads only the workbook paths you explicitly pass to it, parses them in memory on your
+machine, and returns the results to the MCP client that started it. It does not read your
+other files, your conversation history, or your assistant's memory, and it writes nothing
+to disk.
+
+**Storage and retention:** none. Workbook data lives in memory for the length of the call
+and is discarded when the process exits. There is no server, no database and no logging.
+
+**Third parties:** none. Note that the *results* of a tool call (field names, formulas,
+audit findings) are returned to the AI assistant you chose to ask, so that it can answer
+you; your workbook file itself is never sent anywhere. Your assistant's own privacy policy
+governs that conversation.
+
+**Contact:** https://github.com/andey0Saikiran/tableau-lineage/issues ·
+security reports: https://github.com/andey0Saikiran/tableau-lineage/security/advisories/new
+
+## How it works
 
 - The workbook is read from your local disk and parsed in the Node process. **Nothing is sent anywhere.**
 - Unused fields are reported as *candidates* with a confidence level, never as a

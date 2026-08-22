@@ -242,6 +242,7 @@ server.registerTool(
   'analyze_workbook',
   {
     title: 'Analyze a Tableau workbook',
+    annotations: { readOnlyHint: true, openWorldHint: false },
     description:
       'Parse a local Tableau workbook (.twbx or .twb) and return an overview: field counts, datasources, calculated-field names by type, parameter names, and raw fields. Parsing happens locally; the file is never uploaded. Start here, then use the other tools for details.',
     inputSchema: { path: pathArg },
@@ -274,6 +275,7 @@ server.registerTool(
   'list_calculated_fields',
   {
     title: 'List calculated fields with formulas',
+    annotations: { readOnlyHint: true, openWorldHint: false },
     description:
       'List every calculated field in the workbook with its formula, type (calculated / LOD / table calc), datasource, and what it directly depends on. Optionally filter by a case-insensitive substring of the field name or formula.',
     inputSchema: {
@@ -314,6 +316,7 @@ server.registerTool(
   'get_field',
   {
     title: 'Get one field in full detail',
+    annotations: { readOnlyHint: true, openWorldHint: false },
     description:
       'Full detail for a single field by name (brackets optional, case-insensitive): formula, type, direct dependencies, and every field that directly uses it.',
     inputSchema: {
@@ -362,6 +365,7 @@ server.registerTool(
   'trace_dependencies',
   {
     title: 'Trace a field’s lineage',
+    annotations: { readOnlyHint: true, openWorldHint: false },
     description:
       'Trace what a field is built from (upstream, recursive tree down to raw columns and parameters) and everything that would be affected if it changed (downstream, transitive). The impact-analysis tool: use before editing a calculation.',
     inputSchema: {
@@ -400,6 +404,7 @@ server.registerTool(
   'list_parameters',
   {
     title: 'List parameters',
+    annotations: { readOnlyHint: true, openWorldHint: false },
     description:
       'List every parameter in the workbook: current value, datatype, allowed values, and which calculated fields use each one.',
     inputSchema: { path: pathArg },
@@ -425,6 +430,7 @@ server.registerTool(
   'get_lineage_graph',
   {
     title: 'Get the full lineage graph',
+    annotations: { readOnlyHint: true, openWorldHint: false },
     description:
       'The complete dependency graph as JSON: one node per field/parameter (with type) and one directed edge per dependency (source feeds target). Suitable for rendering or graph analysis.',
     inputSchema: { path: pathArg },
@@ -465,6 +471,7 @@ server.registerTool(
   'list_sql_queries',
   {
     title: 'List the SQL stored in the workbook',
+    annotations: { readOnlyHint: true, openWorldHint: false },
     description:
       'Extract every SQL statement the workbook contains: Custom SQL relations (with the full query text), Initial SQL run when a connection opens, stored-procedure references with their parameters, and RAWSQL_* calculated fields. Each entry names the datasource and the database connection (class, server, dbname) it targets. Note: queries Tableau auto-generates at runtime for live connections are not stored in the file, so they cannot be extracted.',
     inputSchema: { path: pathArg },
@@ -499,6 +506,7 @@ server.registerTool(
   'list_filters',
   {
     title: 'List the filters in the workbook',
+    annotations: { readOnlyHint: true, openWorldHint: false },
     description:
       'Every filter in the workbook, deduplicated across worksheets: the field it acts on (caption-resolved), filter kind (categorical / quantitative / relative-date), whether it is a context filter, which worksheets use it, selected member values when stored, and quantitative ranges. Includes a by_worksheet grouping and the distinct list of fields driving any filter. Data-source filters are marked "(data source filter)".',
     inputSchema: { path: pathArg },
@@ -530,6 +538,7 @@ server.registerTool(
   'list_worksheets',
   {
     title: 'List worksheets with their fields and filters',
+    annotations: { readOnlyHint: true, openWorldHint: false },
     description:
       'Every worksheet in the workbook with the fields it uses (caption-resolved, from its datasource dependencies) and the filters it applies (field, kind, context status). The per-sheet view of the workbook: use it to answer "what does this sheet depend on?" or "where is this field actually displayed?".',
     inputSchema: { path: pathArg },
@@ -597,6 +606,7 @@ server.registerTool(
   'diff_workbooks',
   {
     title: 'Compare two workbook versions',
+    annotations: { readOnlyHint: true, openWorldHint: false },
     description:
       'Semantic diff between two Tableau workbooks: calculations added, removed, renamed or edited (with the downstream fields each edit affects), plus changed parameters, filters, worksheets, dashboards, data sources and stored SQL. Formula reformatting is ignored, and a field that disappears while an identical formula appears under a new name is reported as a rename. Use this for release notes, code review of a workbook change, or answering "what changed and what does it break?".',
     inputSchema: {
@@ -619,6 +629,7 @@ server.registerTool(
   'audit_workbook',
   {
     title: 'Audit a workbook for dead weight and performance',
+    annotations: { readOnlyHint: true, openWorldHint: false },
     description:
       'Find what is wrong with a workbook: fields and parameters nothing uses (each with a confidence level and the reason), duplicate calculations (identical formulas under different names, and the more dangerous same-name-different-formula case), and performance findings (heavy LODs, nested calculations, deep calculation chains, non-fixed dashboard sizing, live connections, and more). Use it before a cleanup, a migration, or a workbook review. Unused fields are reported with confidence rather than as certainties, because a field can be referenced in ways a file cannot show.',
     inputSchema: { path: pathArg },

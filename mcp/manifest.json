@@ -1,0 +1,100 @@
+{
+  "manifest_version": "0.2",
+  "name": "tableau-lineage",
+  "display_name": "Tableau Workbook Auditor",
+  "version": "1.0.1",
+  "description": "Audit and explore Tableau workbooks locally: unused fields, duplicate calculations, performance findings, full lineage, filters, dashboards, stored SQL, and version diffs.",
+  "long_description": "Reads Tableau packaged workbooks (.twbx) and workbook definitions (.twb) from your own disk and answers questions about them, without the file ever leaving your machine.\n\nAsk your assistant things like \"what would break if I change [Profit Ratio]?\", \"which fields in this workbook is nobody using?\", \"why is this dashboard slow?\", or \"what changed between these two versions?\".\n\nEleven read-only tools cover: an audit (unused fields with a confidence level and the reason, duplicate calculations including the same-name-different-formula case, and 15 static performance rules), full calculated-field lineage with upstream and downstream impact, parameters, filters with their per-worksheet breakdown, worksheets and dashboards, data sources including extract vs live, any SQL the workbook stores (Custom SQL, Initial SQL, stored procedures, RAWSQL), and a semantic diff between two versions.\n\nThe extension makes no network requests at all. It parses workbooks in memory on your machine and writes nothing to disk. It is MIT licensed and fully open source, so the privacy claim is verifiable rather than promised.\n\nThe same engine also runs as a free browser app at tableau-lineage.com.",
+  "author": {
+    "name": "Sai Kiran Andey",
+    "url": "https://www.linkedin.com/in/andeysaikiran/"
+  },
+  "homepage": "https://tableau-lineage.com",
+  "documentation": "https://github.com/andey0Saikiran/tableau-lineage/tree/main/mcp#readme",
+  "support": "https://github.com/andey0Saikiran/tableau-lineage/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/andey0Saikiran/tableau-lineage"
+  },
+  "icon": "icon.png",
+  "license": "MIT",
+  "privacy_policies": [
+    "https://github.com/andey0Saikiran/tableau-lineage/blob/main/PRIVACY.md"
+  ],
+  "keywords": [
+    "tableau",
+    "twbx",
+    "data-lineage",
+    "audit",
+    "business-intelligence",
+    "documentation",
+    "sql"
+  ],
+  "server": {
+    "type": "node",
+    "entry_point": "server/index.mjs",
+    "mcp_config": {
+      "command": "node",
+      "args": [
+        "${__dirname}/server/index.mjs"
+      ]
+    }
+  },
+  "tools": [
+    {
+      "name": "audit_workbook",
+      "description": "Find unused fields and parameters, duplicate calculations, and performance problems in a workbook."
+    },
+    {
+      "name": "analyze_workbook",
+      "description": "Overview of a workbook: field counts, data sources, calculated fields by type, parameters, raw fields."
+    },
+    {
+      "name": "trace_dependencies",
+      "description": "Trace what a field is built from and everything downstream that a change would affect."
+    },
+    {
+      "name": "diff_workbooks",
+      "description": "Compare two versions of a workbook and report the changes that matter, with blast radius."
+    },
+    {
+      "name": "list_calculated_fields",
+      "description": "Every calculation with its formula, type and direct dependencies."
+    },
+    {
+      "name": "get_field",
+      "description": "One field in full detail, including everything that uses it."
+    },
+    {
+      "name": "list_parameters",
+      "description": "Parameters with values, datatypes, allowed values, and which fields use them."
+    },
+    {
+      "name": "list_filters",
+      "description": "Every filter with its kind, context status, selected values, and per-worksheet breakdown."
+    },
+    {
+      "name": "list_worksheets",
+      "description": "Every worksheet with the fields it uses and the filters it applies."
+    },
+    {
+      "name": "list_sql_queries",
+      "description": "Custom SQL, Initial SQL, stored procedures and RAWSQL fields, with their connections."
+    },
+    {
+      "name": "get_lineage_graph",
+      "description": "The complete dependency graph as nodes and edges."
+    }
+  ],
+  "tools_generated": false,
+  "compatibility": {
+    "claude_desktop": ">=0.10.0",
+    "platforms": [
+      "darwin",
+      "win32"
+    ],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.andey0Saikiran/tableau-lineage",
+  "title": "Tableau Workbook Auditor",
+  "description": "Local-only Tableau .twbx audit: lineage, unused fields, duplicate calcs, SQL, version diffs",
+  "version": "1.0.1",
+  "websiteUrl": "https://tableau-lineage.com",
+  "repository": {
+    "url": "https://github.com/andey0Saikiran/tableau-lineage",
+    "source": "github",
+    "id": "1278695609",
+    "subfolder": "mcp"
+  },
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "tableau-lineage-mcp",
+      "version": "1.0.1",
+      "runtimeHint": "npx",
+      "transport": { "type": "stdio" }
+    }
+  ]
+}
