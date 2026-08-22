@@ -17,13 +17,21 @@ It is the same open-source extraction engine that powers [tableau-lineage.com](h
 
 ## Install
 
+### Claude Desktop (one click, no terminal)
+
+[**Download the extension**](https://github.com/andey0Saikiran/tableau-lineage/releases/latest/download/tableau-lineage.mcpb) and double-click it. Claude Desktop installs it for you.
+No Node install and no config file needed, because Claude Desktop ships its own Node.
+
+You can also drag the `.mcpb` onto the Claude Desktop window, or use
+**Settings → Extensions → Advanced settings → Install Extension**.
+
 ### Claude Code
 
 ```bash
 claude mcp add tableau-lineage -- npx -y tableau-lineage-mcp
 ```
 
-### Claude Desktop
+### Claude Desktop (manual, if you prefer config over the extension)
 
 Add to `claude_desktop_config.json` (Settings → Developer → Edit Config):
 

@@ -4,6 +4,9 @@
 export const SITE_URL = 'https://tableau-lineage.com';
 export const REPO_URL = 'https://github.com/andey0Saikiran/tableau-lineage';
 export const NPM_URL = 'https://www.npmjs.com/package/tableau-lineage-mcp';
+/** Always resolves to the newest release asset, so it never needs a version bump. */
+export const MCPB_DOWNLOAD_URL =
+  'https://github.com/andey0Saikiran/tableau-lineage/releases/latest/download/tableau-lineage.mcpb';
 
 export interface Person {
   name: string;

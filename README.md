@@ -156,6 +156,11 @@ Vite · React 19 · TypeScript · Tailwind CSS · [fflate](https://github.com/10
 The same engine ships as an MCP server, so Claude, Cursor and other MCP clients can read
 and audit workbooks straight from your disk. Still 100% local, nothing uploaded.
 
+**Claude Desktop:** [download the extension](https://github.com/andey0Saikiran/tableau-lineage/releases/latest/download/tableau-lineage.mcpb)
+and double-click it. One click, no terminal and no Node setup.
+
+**Claude Code, Cursor and other clients:**
+
 ```bash
 claude mcp add tableau-lineage -- npx -y tableau-lineage-mcp
 ```

@@ -1,10 +1,11 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from 'react';
-import { Terminal, Copy } from 'lucide-react';
+import { Terminal, Copy, Download } from 'lucide-react';
 import { Header } from './components/Header';
 import { AnnouncementBar } from './components/AnnouncementBar';
 import { Footer } from './components/Footer';
 import { ConnectCard } from './components/ConnectCard';
 import { CompareCta } from './components/CompareCta';
+import { MCPB_DOWNLOAD_URL } from './lib/site';
 
 // Result panels only exist after a workbook is analysed, so they are split out
 // of the landing-page bundle. Keeping the entry chunk small is a hard budget:
@@ -178,6 +179,14 @@ export default function App() {
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
+                  {/* One-click path first: most people are on Claude Desktop and
+                      should not have to open a terminal to try this. */}
+                  <a
+                    href={MCPB_DOWNLOAD_URL}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-ink px-2.5 py-1.5 text-xs font-bold text-white transition-colors hover:bg-slate-700"
+                  >
+                    <Download className="h-3 w-3" /> Claude Desktop extension
+                  </a>
                   <button
                     type="button"
                     onClick={() => {
@@ -186,6 +195,7 @@ export default function App() {
                         .then(() => showToast('Install command copied', 'success'))
                         .catch(() => showToast('Could not copy', 'error'));
                     }}
+                    title="Copy the install command for Claude Code or Cursor"
                     className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-white px-2.5 py-1.5 font-mono text-xs text-ink transition-colors hover:border-brand-500 hover:text-brand-600"
                   >
                     <Copy className="h-3 w-3 text-brand-600" /> tableau-lineage-mcp
