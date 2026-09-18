@@ -68,6 +68,7 @@ const en = {
   privacyTitle: 'Privacy & Security',
   madeBy: 'Built by',
   contributors: 'with',
+  starCta: 'Star on GitHub',
 } as const;
 
 export type TranslationKey = keyof typeof en;

@@ -52,7 +52,7 @@ export default function App() {
   const t = useMemo(() => makeT(language), [language]);
   const { showToast, ToastViewport } = useToast();
   const {
-    status, result, sql, filters, audit, dashboards, provenance,
+    status, result, sql, filters, audit, dashboards, provenance, partialSections,
     reportHtml, error, analyze, reset, clearError,
   } = useWorkbook();
   const { steps: diffSteps, busy: comparing, error: compareError, compare, resetCompare } = useCompare();
@@ -236,6 +236,10 @@ export default function App() {
               toast={showToast}
             />
 
+            {/* The ask sits here, not at the foot of the page: below the graph
+                it is thousands of pixels down, past where anyone scrolls. */}
+            <ConnectCard audit={audit} failedSections={partialSections} />
+
             <Suspense fallback={null}>
               <AuditPanel audit={audit} toast={showToast} />
               <StructurePanel dashboards={dashboards} provenance={provenance} />
@@ -244,8 +248,6 @@ export default function App() {
             </Suspense>
 
             <VisualizerFrame ref={iframeRef} html={reportHtml} title={`${result.fileLabel} — lineage`} />
-
-            <ConnectCard />
           </section>
         )}
       </main>

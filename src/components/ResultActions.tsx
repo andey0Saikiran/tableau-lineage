@@ -2,17 +2,23 @@ import { Download, Table2, Braces, FileText, RefreshCw } from 'lucide-react';
 import { downloadReportHtml, downloadCsv, downloadJson, downloadMarkdown } from '../lib/exports';
 import type { AnalysisBundle } from '../lib/exports';
 import type { TranslationKey } from '../lib/i18n';
+import type { ToastAction } from './Toast';
+import { REPO_URL } from '../lib/site';
 
 interface Props {
   t: (k: TranslationKey) => string;
   bundle: AnalysisBundle;
   reportHtml: string;
   onReset: () => void;
-  toast: (msg: string, kind?: 'info' | 'success' | 'error') => void;
+  toast: (msg: string, kind?: 'info' | 'success' | 'error', action?: ToastAction) => void;
 }
 
 export function ResultActions({ t, bundle, reportHtml, onReset, toast }: Props) {
   const { result } = bundle;
+  // Downloading an export is the highest-intent moment in the product: the
+  // visitor just decided the output was worth keeping. Ask there, once, in the
+  // confirmation they were already going to see.
+  const star: ToastAction = { label: t('starCta'), href: REPO_URL };
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex flex-wrap items-center gap-2">
@@ -23,7 +29,7 @@ export function ResultActions({ t, bundle, reportHtml, onReset, toast }: Props) 
           type="button"
           onClick={() => {
             downloadReportHtml(reportHtml, result.fileLabel);
-            toast(t('reportDownloaded'), 'success');
+            toast(t('reportDownloaded'), 'success', star);
           }}
           className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-br from-brand-500 to-leaf px-4 py-2 text-sm font-semibold text-white shadow-md transition-all hover:shadow-lg"
         >
@@ -32,7 +38,7 @@ export function ResultActions({ t, bundle, reportHtml, onReset, toast }: Props) 
         <SecondaryButton
           onClick={() => {
             downloadCsv(bundle);
-            toast(t('csvDownloaded'), 'success');
+            toast(t('csvDownloaded'), 'success', star);
           }}
           icon={<Table2 className="h-4 w-4" />}
           label={t('downloadCsv')}
@@ -40,7 +46,7 @@ export function ResultActions({ t, bundle, reportHtml, onReset, toast }: Props) 
         <SecondaryButton
           onClick={() => {
             downloadJson(bundle);
-            toast(t('jsonDownloaded'), 'success');
+            toast(t('jsonDownloaded'), 'success', star);
           }}
           icon={<Braces className="h-4 w-4" />}
           label={t('downloadJson')}
@@ -48,7 +54,7 @@ export function ResultActions({ t, bundle, reportHtml, onReset, toast }: Props) 
         <SecondaryButton
           onClick={() => {
             downloadMarkdown(bundle);
-            toast(t('markdownDownloaded'), 'success');
+            toast(t('markdownDownloaded'), 'success', star);
           }}
           icon={<FileText className="h-4 w-4" />}
           label={t('downloadMarkdown')}

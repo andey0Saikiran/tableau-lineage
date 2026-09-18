@@ -91,6 +91,17 @@ describe('markdown handover document', () => {
   });
 });
 
+describe('csv field inventory', () => {
+  it('holds exactly one header row plus one row per field, and nothing else', () => {
+    // Any extra row (a credit line, a footer) is read as a record by pandas,
+    // Excel and Tableau, so it would silently corrupt field counts.
+    const bundle = bundleOf(DEMO);
+    const lines = buildCsv(bundle).split('\r\n');
+    expect(lines[0].startsWith('\ufeffData Source')).toBe(true);
+    expect(lines.length).toBe(1 + bundle.result.fields.length);
+  });
+});
+
 describe('untrusted workbook content in exports', () => {
   // Field names and formulas come from a file the user did not write, so both
   // exports have to survive hostile content.

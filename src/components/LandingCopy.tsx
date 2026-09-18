@@ -1,5 +1,6 @@
 import { FileUp, Cpu, Share2 } from 'lucide-react';
 import { HeroGraph } from './HeroGraph';
+import { CREATOR, REPO_URL } from '../lib/site';
 
 /**
  * The landing page's above-the-fold copy, kept as a standalone pure component
@@ -37,11 +38,36 @@ export function LandingCopy() {
               <b className="text-ink">
                 {i + 1}. {title}
               </b>
-              <span className="text-muted"> — {body}</span>
+              <span className="text-muted">: {body}</span>
             </span>
           </li>
         ))}
       </ol>
+
+      {/* Author credit in the landing copy itself. The header's credit is
+          hidden below md, so on phones this and the footer are the only ones
+          (on phones this sits below the upload card, about two screens down). */}
+      <p className="mt-7 text-xs text-muted">
+        Built by{' '}
+        <a
+          href={CREATOR.linkedin}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-ink underline decoration-brand-400/50 underline-offset-2 hover:text-brand-700"
+        >
+          {CREATOR.name}
+        </a>
+        . Free and open source:{' '}
+        <a
+          href={REPO_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="font-semibold text-ink underline decoration-brand-400/50 underline-offset-2 hover:text-brand-700"
+        >
+          read the code on GitHub
+        </a>
+        .
+      </p>
     </div>
   );
 }
