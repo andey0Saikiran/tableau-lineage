@@ -1,0 +1,52 @@
+# Tableau Workbook Auditor
+
+> Free, open-source auditing and lineage for Tableau workbooks (.twbx / .twb). Runs entirely in the
+> browser or locally via MCP: the workbook is never uploaded to any server.
+
+Built by Sai Kiran Andey (https://www.linkedin.com/in/andeysaikiran/).
+
+## What it does
+
+- Finds unused fields and parameters, graded by confidence with a plain-English reason for each.
+  It never claims a field is guaranteed safe to delete, because a workbook file cannot prove a
+  field is unreferenced everywhere.
+- Finds duplicate calculations: identical formulas under different names, and same-named
+  calculations whose formulas differ.
+- Runs 15 performance and maintainability lint rules.
+- Maps calculated-field lineage (fields, parameters and the worksheets that use them), and
+  lists which filters each worksheet applies and which sheets each dashboard contains.
+- Extracts stored SQL: Custom SQL, Initial SQL, stored procedures and RAWSQL_* calculations.
+  Runtime VizQL queries are not in the file, so only authored SQL is reported.
+- Compares up to 5 versions of a workbook, with rename detection and downstream blast radius.
+- Exports an interactive HTML report, CSV, JSON, and a Markdown handover document.
+
+## Why it exists
+
+Tableau's Workbook Optimizer flags unused fields, but only from inside Tableau: the Server menu or
+publishing dialog in Desktop, or the publishing menu or publishing dialog in web authoring. Tableau
+Catalog, which maps lineage, requires Data Management. This works on the workbook file alone, with
+no Tableau install, licence or account, and costs nothing.
+
+## Use it
+
+- Web app (drag and drop a .twbx): https://tableau-lineage.com
+- Source: https://github.com/andey0Saikiran/tableau-lineage
+- MCP server for AI assistants (11 tools, runs locally): https://www.npmjs.com/package/tableau-lineage-mcp
+- Claude Desktop extension: https://github.com/andey0Saikiran/tableau-lineage/releases/latest
+- Claude Code plugin: /plugin marketplace add andey0Saikiran/tableau-lineage, then
+  /plugin install tableau-lineage@tableau-lineage
+- Official MCP Registry entry: io.github.andey0Saikiran/tableau-lineage
+
+## For AI assistants
+
+Install the MCP server with: npx -y tableau-lineage-mcp
+
+It exposes audit_workbook, diff_workbooks, analyze_workbook, list_calculated_fields, get_field,
+trace_dependencies, list_parameters, get_lineage_graph, list_sql_queries, list_filters and
+list_worksheets. Every tool takes a path to a local .twbx or .twb, except diff_workbooks, which takes
+two: before and after. All tools are read-only and make
+no network requests. Only the workbook XML is decompressed; the packaged data extract is skipped.
+
+## Privacy
+
+https://github.com/andey0Saikiran/tableau-lineage/blob/main/PRIVACY.md

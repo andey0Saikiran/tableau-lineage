@@ -16,15 +16,18 @@ Inheriting someone else's Tableau workbook means reverse-engineering dozens of
 calculated fields by hand to answer one question: where does this number come from, and
 what breaks if I change it?
 
-Two more questions come up just as often and have no free answer:
+Two more questions come up just as often:
 
-- **What in here is dead?** Tableau has no built-in way to list unused fields; the
-  request has been open on the community forum since 2015.
-- **Why is it slow?** Tableau's Workbook Optimizer needs a Creator licence, and Catalog
-  needs Data Management on Server or Cloud.
+- **What in here is dead?** Tableau's Workbook Optimizer flags unused fields, but only from
+  inside Tableau: the Server menu or publishing dialog in Desktop, or the publishing menu or
+  publishing dialog in web authoring on Server or Cloud.
+- **Why is it slow?** Tableau's answers are that same Optimizer, which checks best-practice
+  guidelines, and Performance Recording, which shows where the time goes. Both run only
+  inside Tableau, and Tableau Catalog, which maps lineage, needs Data Management on Server or
+  Cloud.
 
-This reads the workbook file itself and answers all three, free, with no licence and no
-account. Because workbooks often carry sensitive data, everything runs locally: the
+This reads the workbook file itself: it answers the first two questions and flags the likely
+causes of the third, free, with no Tableau install, no licence and no account. Because workbooks often carry sensitive data, everything runs locally: the
 `.twbx` never leaves your machine, which is a property of the architecture rather than a
 promise (there is no server to send it to).
 
