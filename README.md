@@ -7,6 +7,7 @@ uploaded, stored, or sent anywhere.
 
 🔗 **Live:** https://tableau-lineage.com
 📦 **MCP server:** [`tableau-lineage-mcp`](https://www.npmjs.com/package/tableau-lineage-mcp)
+🛡️ **mcprush:** [listed, security grade A](https://mcprush.com/andey0saikiran/tableau-workbook-auditor-mcp) (November 2026)
 
 ---
 

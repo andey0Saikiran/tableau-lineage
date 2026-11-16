@@ -6,6 +6,8 @@ An [MCP](https://modelcontextprotocol.io) server that parses local Tableau workb
 
 It is the same open-source extraction engine that powers [tableau-lineage.com](https://tableau-lineage.com), wrapped for AI assistants. Parsing happens **in-process on your machine**: no upload, no server, no account. When reading a `.twbx`, only the workbook XML is decompressed; the bundled data extract is never touched.
 
+Listed on [mcprush](https://mcprush.com/andey0saikiran/tableau-workbook-auditor-mcp) with a security grade of A (November 2026).
+
 ## What you can ask your assistant
 
 - *"Audit `~/Downloads/Sales.twbx`. What is safe to delete?"*
